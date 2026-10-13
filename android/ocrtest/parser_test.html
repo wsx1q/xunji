@@ -1,0 +1,20 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>parser test</title>
+<pre id="out">running…</pre>
+<script src="../../web/js/lib/bill_parser.js"></script>
+<script>
+  // 从仓库根目录起 http 服务后打开 /android/ocrtest/parser_test.html，逐个对比 JS 与 Python 解析结果
+  const norm = v => JSON.stringify(v, (k, x) => typeof x === 'number' ? Math.round(x * 1000) / 1000 : x,
+    ).replace(/"(\w+)":/g, '$1:');
+  const canon = v => Array.isArray(v) ? v.map(canon) : v && typeof v === 'object'
+    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, canon(v[k])])) : v;
+  fetch('parser_cases.json').then(r => r.json()).then(cases => {
+    let ok = 0; const bad = [];
+    for (const c of cases) {
+      const a = norm(canon(parseBill(c.lines, c.width, c.height))), b = norm(canon(c.expect));
+      if (a === b) ok++; else bad.push(c.name + '\n  JS ' + a.slice(0, 400) + '\n  PY ' + b.slice(0, 400));
+    }
+    document.getElementById('out').textContent = `${ok}/${cases.length} 一致\n\n` + bad.slice(0, 5).join('\n\n');
+  });
+</script>

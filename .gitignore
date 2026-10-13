@@ -1,0 +1,47 @@
+# 打包产物（APK / exe 发到 GitHub Releases，不进仓库）
+dist/
+
+# Android / Gradle
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+android/build_apk.log
+android/phone_log.txt
+android/phone_test.txt
+
+# Python
+__pycache__/
+*.pyc
+.venv*/
+ocr/packaging/build/
+
+# OCR 服务运行时生成：配置（可能含访问口令）、调试时保存的上传截图
+ocr/ocr_config.ini
+ocr/uploads/
+
+# OCR 模型：仓库里只放打进 APK 的 v5_det.onnx、v5f_rec.onnx、v5f_keys.txt；
+# 其余（v5 / v5q / v6）只用于本地对比测试，需要时用 android/ocrtest/prepare_models.py 生成
+android/app/src/ocr/assets/models/*
+!android/app/src/ocr/assets/models/v5_det.onnx
+!android/app/src/ocr/assets/models/v5f_rec.onnx
+!android/app/src/ocr/assets/models/v5f_keys.txt
+
+# 签名密钥（只存在本机，绝不提交）
+*.jks
+*.keystore
+android/keystore.properties
+
+# OCR 测试的生成物
+android/ocrtest/out/
+android/ocrtest/lib/
+android/ocrtest/parser_cases.json
+android/ocrtest/paddle/work/
+android/ocrtest/q_fold/*.onnx
+android/ocrtest/q_static/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini

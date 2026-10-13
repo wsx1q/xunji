@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 识别时检测图的输入和概率图都是几十 MB 的数组 -->
+    <application android:largeHeap="true" />
+</manifest>

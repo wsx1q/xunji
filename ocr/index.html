@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>账单 OCR 测试</title>
+<style>
+body{font-family:-apple-system,"Microsoft YaHei",sans-serif;margin:0;background:#F4F5F7;color:#222}
+header{background:linear-gradient(135deg,#FF8A50,#FF6A3D);color:#fff;padding:14px 18px;font-size:18px;font-weight:600}
+main{display:flex;gap:16px;padding:16px;flex-wrap:wrap}
+.card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+#left{flex:0 0 420px;max-width:100%}
+#right{flex:1;min-width:320px}
+canvas{max-width:100%;border-radius:8px;display:block}
+.pick{display:block;border:2px dashed #FFB79A;border-radius:12px;padding:22px;text-align:center;color:#FF6A3D;cursor:pointer;margin-bottom:12px}
+.pick input{display:none}
+.plat{font-size:20px;font-weight:700;margin-bottom:6px}
+.muted{color:#888;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+td,th{padding:8px 6px;border-bottom:1px solid #F0F0F0;text-align:left;vertical-align:top}
+.k-expense{color:#19A35B;font-weight:600}.k-refund{color:#F0533A;font-weight:600}.k-skip,.k-unknown{color:#999}
+.lo{background:#FFF6E0}
+details{margin-top:12px}pre{white-space:pre-wrap;font-size:12px;background:#FAFAFA;padding:8px;border-radius:8px;max-height:420px;overflow:auto}
+</style>
+</head>
+<body>
+<header>账单 OCR 识别测试（PaddleOCR）</header>
+<main>
+  <div id="left" class="card">
+    <label class="pick">点击或拖入账单截图<input type="file" id="f" accept="image/*"></label>
+    <canvas id="cv"></canvas>
+  </div>
+  <div id="right" class="card">
+    <div id="out" class="muted">选择一张拼多多 / 淘宝 / 京东的订单截图</div>
+  </div>
+</main>
+<script>
+const KIND = { expense: '支出', refund: '退款', refund_pending: '退款中', skip: '不记账', unknown: '未知' };
+const COLORS = ['#FF6A3D', '#2F80ED', '#19A35B', '#9B51E0', '#F2994A', '#EB5757', '#00A3A3'];
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+$('#f').onchange = e => e.target.files[0] && go(e.target.files[0]);
+document.addEventListener('dragover', e => e.preventDefault());
+document.addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer.files[0]; f && go(f); });
+
+async function go(file) {
+  const img = await loadImg(file);
+  draw(img, null);
+  $('#out').innerHTML = '识别中…';
+  const fd = new FormData(); fd.append('file', file);
+  const t0 = performance.now();
+  try {
+    const r = await fetch('/ocr', { method: 'POST', body: fd });
+    if (!r.ok) throw new Error(await r.text());
+    const d = await r.json();
+    draw(img, d);
+    show(d, Math.round(performance.now() - t0));
+  } catch (e) { $('#out').innerHTML = '识别失败：' + esc(e.message); }
+}
+function loadImg(file) {
+  return new Promise(res => { const i = new Image(); i.onload = () => res(i); i.src = URL.createObjectURL(file); });
+}
+function draw(img, d) {
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+  ctx.drawImage(img, 0, 0);
+  if (!d) return;
+  const lw = Math.max(2, img.naturalWidth / 300);
+  ctx.lineWidth = lw / 2; ctx.strokeStyle = 'rgba(0,0,0,.25)';
+  d.lines.forEach(l => { const [x1, y1, x2, y2] = l.box; ctx.strokeRect(x1, y1, x2 - x1, y2 - y1); });
+  [...d.orders, ...d.incomplete].forEach((o, i) => {
+    const c = o.complete ? COLORS[i % COLORS.length] : '#BBB';
+    ctx.lineWidth = lw; ctx.strokeStyle = c; ctx.fillStyle = c + '18';
+    const [y1, y2] = o.y_range;
+    ctx.fillRect(lw, y1, cv.width - 2 * lw, y2 - y1); ctx.strokeRect(lw, y1, cv.width - 2 * lw, y2 - y1);
+  });
+}
+function show(d, totalMs) {
+  const p = d.platform;
+  const rows = d.orders.map((o, i) => `<tr class="${o.confidence === 'low' ? 'lo' : ''}">
+    <td><b style="color:${COLORS[i % COLORS.length]}">#${i + 1}</b></td>
+    <td class="k-${o.kind}">${KIND[o.kind] || o.kind}<div class="muted">${esc(o.status)}</div></td>
+    <td><b>¥${o.amount}</b><div class="muted">${esc(o.amount_from || '')}${o.list_price != null ? ' · 标价 ¥' + o.list_price : ''}${o.qty ? ' ×' + o.qty : ''}</div></td>
+    <td>${esc(o.shop)}<div class="muted">${esc(o.title)}</div>${o.time ? `<div class="muted">${esc(o.time)}</div>` : ''}</td></tr>`).join('');
+  $('#out').innerHTML = `<div class="plat">${esc(p.name)}</div>
+    <div class="muted">平台得分 ${Object.entries(p.scores).map(([k, v]) => `${k}:${v}`).join(' · ')}　|　OCR ${d.ocr_ms}ms，总耗时 ${totalMs}ms，${d.lines.length} 行文字</div>
+    <table><tr><th></th><th>类型</th><th>金额</th><th>店铺 / 商品</th></tr>${rows || '<tr><td colspan="4" class="muted">没有拆出完整订单</td></tr>'}</table>
+    <div class="muted" style="margin-top:8px">合计：支出 ¥${d.summary.expense} · 退款 ¥${d.summary.refund}${d.incomplete.length ? ` · ${d.incomplete.length} 张卡片不完整（被截断）已忽略` : ''}</div>
+    <details><summary>原始识别文字</summary><pre>${d.lines.map(l => `${l.score.toFixed(2)}  ${esc(l.text)}`).join('\n')}</pre></details>`;
+}
+</script>
+</body>
+</html>

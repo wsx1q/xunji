@@ -1,0 +1,4 @@
+..\..\ocr\samples\douyin_orders.jpg
+..\..\ocr\samples\jd_orders.jpg
+..\..\ocr\samples\pdd_orders.jpg
+..\..\ocr\samples\taobao_orders.jpg

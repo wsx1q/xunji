@@ -1,0 +1,13 @@
+=== 1. 手机  12:43:34
+=== 2. 安装最新 OCR 版
+  随手记OCR版_20261013.1241-ocr.apk  28.5 MB  打包时间 2026/10/13 12:42:06
+  Performing Streamed Install
+  Success
+=== 3. ONNX Runtime 测速（PP-OCRv5 极速，2 线程：识别 1x3x48x160 / 1x3x48x320，检测 1x3x1440x640）  12:43:40
+  [  2s] BENCH START ort threads=2 cores=8
+  [  2s] BENCH ort v5f 加载模型...
+  [  2s] BENCH ort v5f rec 1x3x48x160 avg 15.34 ms
+  [  2s] BENCH ort v5f rec 1x3x48x320 avg 27.67 ms
+  [  8s] BENCH ort v5f det 1x3x1440x640 avg 461.64 ms
+  [  8s] BENCH DONE
+=== DONE  12:43:52

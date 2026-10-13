@@ -1,0 +1,78 @@
+python: D:\work\jizhang\ocr\.venv-rapid\Scripts\python.exe
+--- 1. 量化 + 逐行对比
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+15 寮犱笉閲嶅鎴浘锛?29 涓枃瀛楄
+閲忓寲 minmax: 15.9 MB -> 4.4 MB锛岀敤鏃?7s
+Collecting tensor data and making histogram ...
+Finding optimal threshold for each tensor using 'percentile' algorithm ...
+Number of tensors : 106
+Number of histogram bins : 2048
+Percentile : (0.010000000000005116,99.99)
+閲忓寲 pct: 15.9 MB -> 4.4 MB锛岀敤鏃?84s
+鍘熸ā鍨?FP32锛?29 琛岋紝鐢佃剳 CPU 鐢ㄦ椂 11.7s
+RESULT minmax: 涓庡師妯″瀷瀹屽叏鐩稿悓 574/929 (61.8%)锛屽瓧绗︾浉浼煎害 88.40%锛岀數鑴?CPU 鐢ㄦ椂 9.7s锛坸86 涓婄殑 int8 閫熷害涓嶄唬琛ㄦ墜鏈猴級
+    鍘? 鍝?
+    閲? 00
+    鍘? 鍖呰９
+    閲? 鍖呴噷
+    鍘? 鍏ㄩ儴 寰呬粯 寰呭彂璐?
+    閲? 鍏ㄩ儴寰呮敮浠樺緟鍙戣揣
+    鍘? 鐩栦笘灏忛浮瀹樻棗鑸板簵鏃楄埌
+    閲? 鐩栦笘灏忛浮瀹樻柟鏃楄埌鏃楄埌
+    鍘? 灞?
+    閲? 
+    鍘? 銆愮櫨鍏冨嵎鐜嬨€戠洊涓栭浮鍚?
+    閲? 銆愮櫨鍏冨嵎鐜嬨€戠洊涓栧皬楦″惎
+    鍘? 楼99.90
+    閲? 锟?9.90
+    鍘? (2.4G缁忔敹鍣ㄩ渶鍙﹀璐拱锛孴ype-(鏁版嵁绾胯嚜)
+    閲? c0绱呰鑲诧細wo-a鐩达級
+    鍘? x1
+    閲? 脳1
+    鍘? 娣辩┖鐏?
+    閲? 娣辩┖
+    鍘? 鍟嗗搧濂戒笉濂斤紝璇勪环涓?
+    閲? 鍟嗗搧濂戒笉濂斤紝璇勪环涓€涓?
+    鍘? 鐢宠鍞悗
+    閲? 涓鍞悗
+RESULT pct: 涓庡師妯″瀷瀹屽叏鐩稿悓 618/929 (66.5%)锛屽瓧绗︾浉浼煎害 92.18%锛岀數鑴?CPU 鐢ㄦ椂 9.7s锛坸86 涓婄殑 int8 閫熷害涓嶄唬琛ㄦ墜鏈猴級
+    鍘? Q鍟嗗搧鍚?璁㈠崟鍙?蹇€掑崟鍙?
+    閲? 鍟嗗搧鍚?璁㈠崟鍙?蹇€掑崟鍙?
+    鍘? 鍖呰９
+    閲? 鍖呴噷
+    鍘? 鍏ㄩ儴 寰呬粯 寰呭彂璐?
+    閲? 鍏ㄩ儴銆€寰呮敮浠樺緟鍙戣揣
+    鍘? 鐩栦笘灏忛浮瀹樻棗鑸板簵鏃楄埌
+    閲? 鐩栦笘灏忛浮瀹樻柟鏃楄埌搴楀皬鏃楄埌
+    鍘? 灞?
+    閲? 
+    鍘? 銆愮櫨鍏冨嵎鐜嬨€戠洊涓栭浮鍚?
+    閲? 銆愮櫨鍏冨嵎鐜嬨€戠洊涓栧皬楦″惎
+    鍘? (2.4G缁忔敹鍣ㄩ渶鍙﹀璐拱锛孴ype-(鏁版嵁绾胯嚜)
+    閲? [2.460鏀跺湅瀵︽垜澶栫編,Ty(0鍦嬬悊闈?
+    鍘? 娣辩┖鐏?
+    閲? 娣辩┖鐏?
+    鍘? 鍟嗗搧濂戒笉濂斤紝璇勪环涓?
+    閲? 鍟嗗搧濂戒笉濂斤紝璇勪环涓€涓?
+    鍘? 鍘昏瘎浠?
+    閲? 鍘昏瘎浠?
+    鍘? FoYes瀹樻棗鑸板簵鏃楄埌
+    閲? FoYes瀹樻柟鏃楄埌搴楀皬鏃楄埌
+    鍘? FoYes
+    閲? FoVes
+--- 2. Java 全流程：bx_v5q_minmax
+  load 489 ms (v5_det + ..\..\..\..\..\ocrtest\q_static\v5_rec_qdq_minmax, detShort 736)
+  RESULT bx_v5q_minmax: 34 张，平均 检测 335 ms + 识别 931 ms
+  [严格，和原v5比] 瑙ｆ瀽涓€鑷?0/34锛屾枃瀛楄涓€鑷?1072/2123 (50.5%)
+  [只比金额，和原v5比] 瑙ｆ瀽涓€鑷?26/34锛屾枃瀛楄涓€鑷?1072/2123 (50.5%)
+  [只比金额，和v6参考比] 瑙ｆ瀽涓€鑷?26/34锛屾枃瀛楄涓€鑷?887/2203 (40.3%)
+--- 2. Java 全流程：bx_v5q_pct
+  load 436 ms (v5_det + ..\..\..\..\..\ocrtest\q_static\v5_rec_qdq_pct, detShort 736)
+  RESULT bx_v5q_pct: 34 张，平均 检测 343 ms + 识别 939 ms
+  [严格，和原v5比] 瑙ｆ瀽涓€鑷?0/34锛屾枃瀛楄涓€鑷?1107/2123 (52.1%)
+  [只比金额，和原v5比] 瑙ｆ瀽涓€鑷?30/34锛屾枃瀛楄涓€鑷?1107/2123 (52.1%)
+  [只比金额，和v6参考比] 瑙ｆ瀽涓€鑷?30/34锛屾枃瀛楄涓€鑷?984/2203 (44.7%)
+=== DONE ===

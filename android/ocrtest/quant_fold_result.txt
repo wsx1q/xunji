@@ -1,0 +1,10 @@
+15 张不重复截图，929 个文字行
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+Collecting tensor data and making histogram ...
+Finding optimal threshold for each tensor using 'percentile' algorithm ...
+Number of tensors : 76
+Number of histogram bins : 2048
+Percentile : (0.010000000000005116,99.99)
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+量化完成：15.8 MB -> 11.3 MB，用时 61s
+RESULT OK D:\work\jizhang\android\ocrtest\q_fold\v5x_q.onnx

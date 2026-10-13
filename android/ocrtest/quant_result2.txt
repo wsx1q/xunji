@@ -1,0 +1,78 @@
+python: D:\work\jizhang\ocr\.venv-rapid\Scripts\python.exe
+--- 1. 量化 + 逐行对比
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+WARNING:root:Please consider to run pre-processing before quantization. Refer to example: https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+WARNING:root:Please consider pre-processing before quantization. See https://github.com/microsoft/onnxruntime-inference-examples/blob/main/quantization/image_classification/cpu/ReadMe.md 
+15 张不重复截图，929 个文字行
+量化 conv_minmax: 15.9 MB -> 11.2 MB，用时 5s
+Collecting tensor data and making histogram ...
+Finding optimal threshold for each tensor using 'percentile' algorithm ...
+Number of tensors : 76
+Number of histogram bins : 2048
+Percentile : (0.010000000000005116,99.99)
+量化 conv_pct: 15.9 MB -> 11.2 MB，用时 56s
+原模型 FP32：929 行，电脑 CPU 用时 11.0s
+RESULT conv_minmax: 与原模型完全相同 568/929 (61.1%)，字符相似度 88.28%，电脑 CPU 用时 9.3s（x86 上的 int8 速度不代表手机）
+    原: 品
+    量: 0
+    原: 包裹
+    量: 包里
+    原: 全部 待付 待发货
+    量: 全部待支付待发货
+    原: 盖世小鸡官旗舰店旗舰
+    量: 盖世小鸡官方旗舰旗舰
+    原: 山
+    量: 
+    原: 【百元卷王】盖世鸡启.
+    量: 【百元卷王盖世小鸡启
+    原: ¥99.90
+    量: ￥99.90
+    原: (2.4G经收器需另外购买，Type-(数据线自)
+    量: c0紅行育：e-a證直）
+    原: x1
+    量: ×1
+    原: 深空灰
+    量: 深空
+    原: 商品好不好，评价下
+    量: 商品好不好，评价一下
+    原: 申请售后
+    量: 中请售后
+RESULT conv_pct: 与原模型完全相同 631/929 (67.9%)，字符相似度 92.48%，电脑 CPU 用时 9.2s（x86 上的 int8 速度不代表手机）
+    原: 包裹
+    量: 包里
+    原: 全部 待付 待发货
+    量: 全部　待支付待发货
+    原: 盖世小鸡官旗舰店旗舰
+    量: 盖世小鸡官方旗舰店小旗舰
+    原: 山
+    量: 
+    原: 【百元卷王】盖世鸡启.
+    量: 【百元卷王】盖世小鸡启
+    原: (2.4G经收器需另外购买，Type-(数据线自)
+    量: [2.46收實我外商英,Ty(0國理面)
+    原: 深空灰
+    量: 深空灰-
+    原: 商品好不好，评价下
+    量: 商品好不好，评价一下
+    原: 去评价
+    量: 去评价-
+    原: FoYes官旗舰店旗舰
+    量: FoYes官方旗舰店小旗舰
+    原: FoYes
+    量: FoVes
+    原: 升级版Max|FoYes增肌..
+    量: 升级版 MaxIFoYes增肌..
+--- 2. Java 全流程：bx_v5q_conv_minmax
+  load 454 ms (v5_det + ..\..\..\..\..\ocrtest\q_static\v5_rec_qdq_conv_minmax, detShort 736)
+  RESULT bx_v5q_conv_minmax: 34 张，平均 检测 345 ms + 识别 926 ms
+  [严格，和原v5比] 解析一致 0/34，文字行一致 1055/2123 (49.7%)
+  [只比金额，和原v5比] 解析一致 26/34，文字行一致 1055/2123 (49.7%)
+  [只比金额，和v6参考比] 解析一致 26/34，文字行一致 862/2203 (39.1%)
+--- 2. Java 全流程：bx_v5q_conv_pct
+  load 379 ms (v5_det + ..\..\..\..\..\ocrtest\q_static\v5_rec_qdq_conv_pct, detShort 736)
+  RESULT bx_v5q_conv_pct: 34 张，平均 检测 291 ms + 识别 786 ms
+  [严格，和原v5比] 解析一致 0/34，文字行一致 1115/2123 (52.5%)
+  [只比金额，和原v5比] 解析一致 34/34，文字行一致 1115/2123 (52.5%)
+  [只比金额，和v6参考比] 解析一致 34/34，文字行一致 979/2203 (44.4%)
+=== DONE ===

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#FF6A3D">
+<title>洵记</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="view"></div>
+  <nav id="tabbar">
+    <a data-tab="home" onclick="tab('home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+      <span>首页</span>
+    </a>
+    <a data-tab="list" onclick="openSearch()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+      <span>搜索</span>
+    </a>
+    <a class="plus" onclick="startAdd()"><b>＋</b></a>
+    <a data-tab="report" onclick="tab('report')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3v9h9a9 9 0 1 1-9-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>
+      <span>报表</span>
+    </a>
+    <a data-tab="me" onclick="tab('me')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+      <span>我的</span>
+    </a>
+  </nav>
+</div>
+<div id="sheet"></div>
+<div id="toast"></div>
+<div id="lock"></div>
+<input type="file" id="importFile" accept=".db,.json,application/json,application/octet-stream,*/*" style="display:none" onchange="doImport(this)">
+<input type="file" id="ocrFile" accept="image/*" multiple style="display:none" onchange="ocrFiles(this)">
+<input type="file" id="kbfFile" accept=".kbf,application/zip,application/octet-stream,*/*" style="display:none" onchange="kbfFiles(this)">
+<input type="file" id="billFile" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple style="display:none" onchange="billFiles(this)">
+<!-- 普通脚本，共享全局作用域，按顺序加载（页面里的 onclick 直接调用这些全局函数） -->
+<script src="js/lib/bill_parser.js"></script>
+<script src="js/lib/bill_file.js"></script>
+<script src="js/util.js"></script>
+<script src="js/defaults.js"></script>
+<script src="js/store.js"></script>
+<script src="js/query.js"></script>
+<script src="js/router.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/scrollbar.js"></script>
+<script src="js/vlist.js"></script>
+<script src="js/gesture.js"></script>
+<script src="js/pages/home.js"></script>
+<script src="js/pages/board.js"></script>
+<script src="js/pages/list.js"></script>
+<script src="js/pages/add.js"></script>
+<script src="js/pages/report.js"></script>
+<script src="js/pages/me.js"></script>
+<script src="js/pages/tags.js"></script>
+<script src="js/pages/accounts.js"></script>
+<script src="js/pages/manage.js"></script>
+<script src="js/merge.js"></script>
+<script src="js/pages/help.js"></script>
+<script src="js/security.js"></script>
+<script src="js/io.js"></script>
+<script src="js/import/ocr.js"></script>
+<script src="js/import/bill.js"></script>
+<script src="js/import/kbf.js"></script>
+<script src="js/stress.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

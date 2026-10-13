@@ -1,0 +1,91 @@
+plugins {
+    id 'com.android.application'
+}
+
+def buildStamp = new Date().format('yyyyMMdd.HHmm')
+def buildCode = Integer.parseInt(new Date().format('yyMMddHH'))
+
+android {
+    namespace 'com.xunji.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.xunji.app'
+        minSdk 24
+        targetSdk 34
+        versionCode buildCode
+        versionName buildStamp
+        buildConfigField 'String', 'VERSION_NAME', "\"${buildStamp}\""
+    }
+
+    // lite：正式版（体积小，不带识别导入）；ocr：内置本机 OCR（也可切到电脑 OCR 服务）的测试版，可与正式版同时安装
+    flavorDimensions 'edition'
+    productFlavors {
+        lite {
+            dimension 'edition'
+            resValue 'string', 'app_name', '洵记'
+            // 压力测试等开发用功能只在测试版（ocr）里显示
+            buildConfigField 'boolean', 'TEST_TOOLS', 'false'
+        }
+        ocr {
+            dimension 'edition'
+            applicationIdSuffix '.ocr'
+            versionNameSuffix '-ocr'
+            buildConfigField 'String', 'VERSION_NAME', "\"${buildStamp}-ocr\""
+            resValue 'string', 'app_name', '洵记OCR版'
+            buildConfigField 'boolean', 'TEST_TOOLS', 'true'
+            ndk {
+                // -Pemu 时额外带上 x86_64，用于模拟器测试
+                abiFilters(*(project.hasProperty('emu') ? ['arm64-v8a', 'x86_64'] : ['arm64-v8a']))
+            }
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    sourceSets {
+        main {
+            assets.srcDirs = ['../../web']
+        }
+    }
+
+    // OCR 模型不压缩存进 APK：加载时不用先解压 30MB（模型权重本来也压不了多少）
+    androidResources {
+        noCompress 'onnx'
+        // 本机识别只用 v5 检测 + v5f 识别（PP-OCRv5 极速），其余模型留在目录里做对比测试，但不打进 APK
+        ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~:!v5_rec.onnx:!v5q_rec.onnx:!v5_keys.txt:!v6_*'
+    }
+
+    // 发布签名：密钥和密码放在 android/keystore.properties（不进仓库）；没有这个文件时用 debug 签名，方便别人直接编译
+    def ksFile = rootProject.file('keystore.properties')
+    signingConfigs {
+        if (ksFile.exists()) {
+            def ks = new Properties()
+            ksFile.withInputStream { ks.load(it) }
+            release {
+                storeFile rootProject.file(ks['storeFile'])
+                storePassword ks['storePassword']
+                keyAlias ks['keyAlias']
+                keyPassword ks['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig ksFile.exists() ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    ocrImplementation 'com.microsoft.onnxruntime:onnxruntime-android:1.20.0'
+}

@@ -1,0 +1,126 @@
+[onnx_fp32] 识别 929 行...
+    onnx_fp32: 200/929
+    onnx_fp32: 400/929
+    onnx_fp32: 600/929
+    onnx_fp32: 800/929
+onnx_fp32: 929 行，电脑 CPU 用时 6.9s
+[onnx_int8] 识别 929 行...
+    onnx_int8: 200/929
+    onnx_int8: 400/929
+    onnx_int8: 600/929
+    onnx_int8: 800/929
+onnx_int8: 929 行，电脑 CPU 用时 6.7s
+INFO: Could not find files for the given pattern(s).
+D:\work\jizhang\ocr\.venv-paddle\lib\site-packages\paddle\utils\cpp_extension\extension_utils.py:711: UserWarning: No ccache found. Please be aware that recompiling all source files may be required. You can download and install ccache from: https://github.com/ccache/ccache/blob/master/doc/INSTALL.md
+  warnings.warn(warning_message)
+I1013 10:38:41.739300 29740 program_interpreter.cc:243] New Executor is Running.
+[pd_fp32] 识别 929 行...
+    pd_fp32: 200/929
+    pd_fp32: 400/929
+    pd_fp32: 600/929
+    pd_fp32: 800/929
+pd_fp32: 929 行，电脑 CPU 用时 106.7s
+[pd_int8_all_hist] 识别 929 行...
+    pd_int8_all_hist: 200/929
+    pd_int8_all_hist: 400/929
+    pd_int8_all_hist: 600/929
+    pd_int8_all_hist: 800/929
+pd_int8_all_hist: 929 行，电脑 CPU 用时 155.9s
+[pd_int8_conv_avg] 识别 929 行...
+    pd_int8_conv_avg: 200/929
+    pd_int8_conv_avg: 400/929
+    pd_int8_conv_avg: 600/929
+    pd_int8_conv_avg: 800/929
+pd_int8_conv_avg: 929 行，电脑 CPU 用时 185.2s
+[pd_int8_conv_hist] 识别 929 行...
+    pd_int8_conv_hist: 200/929
+    pd_int8_conv_hist: 400/929
+    pd_int8_conv_hist: 600/929
+    pd_int8_conv_hist: 800/929
+pd_int8_conv_hist: 929 行，电脑 CPU 用时 172.4s
+[pd_int8_conv_hist_old] 识别 929 行...
+    pd_int8_conv_hist_old: 200/929
+    pd_int8_conv_hist_old: 400/929
+    pd_int8_conv_hist_old: 600/929
+    pd_int8_conv_hist_old: 800/929
+pd_int8_conv_hist_old: 929 行，电脑 CPU 用时 124.8s
+[pd_int8_conv_mse] 识别 929 行...
+    pd_int8_conv_mse: 200/929
+    pd_int8_conv_mse: 400/929
+    pd_int8_conv_mse: 600/929
+    pd_int8_conv_mse: 800/929
+pd_int8_conv_mse: 929 行，电脑 CPU 用时 168.6s
+RESULT onnx_int8 对比 onnx_fp32: 逐行完全相同 631/929 (67.9%)，字符相似度 92.48%
+RESULT pd_fp32 对比 onnx_fp32: 逐行完全相同 929/929 (100.0%)，字符相似度 100.00%
+RESULT pd_int8_all_hist 对比 onnx_fp32: 逐行完全相同 695/929 (74.8%)，字符相似度 92.99%
+RESULT pd_int8_conv_avg 对比 onnx_fp32: 逐行完全相同 549/929 (59.1%)，字符相似度 87.07%
+RESULT pd_int8_conv_hist 对比 onnx_fp32: 逐行完全相同 692/929 (74.5%)，字符相似度 92.92%
+RESULT pd_int8_conv_hist_old 对比 onnx_fp32: 逐行完全相同 683/929 (73.5%)，字符相似度 92.72%
+RESULT pd_int8_conv_mse 对比 onnx_fp32: 逐行完全相同 520/929 (56.0%)，字符相似度 87.14%
+RESULT onnx_fp32 对比 pd_fp32: 逐行完全相同 929/929 (100.0%)，字符相似度 100.00%
+RESULT onnx_int8 对比 pd_fp32: 逐行完全相同 631/929 (67.9%)，字符相似度 92.48%
+RESULT pd_int8_all_hist 对比 pd_fp32: 逐行完全相同 695/929 (74.8%)，字符相似度 92.99%
+    原: 品
+    量: 80
+    原: Q商品名/订单号/快递单号
+    量: 商品名/订单号/快递单号
+    原: 包裹
+    量: 包里
+    原: 全部 待付 待发货
+    量: 全部待支付待发货
+    原: 盖世小鸡官旗舰店旗舰
+    量: 盖世鸡官旗舰店旗舰
+    原: 山
+    量: 
+RESULT pd_int8_conv_avg 对比 pd_fp32: 逐行完全相同 549/929 (59.1%)，字符相似度 87.07%
+    原: 品
+    量: 
+    原: Q商品名/订单号/快递单号
+    量: 商品名/订单号/快递单号
+    原: 全部 待付 待发货
+    量: 
+    原: 盖世小鸡官旗舰店旗舰
+    量: 盖世小鸡官方旗店旗
+    原: 山
+    量: 
+    原: 【百元卷王】盖世鸡启.
+    量: 【百元卷王盖世小鸡启.
+RESULT pd_int8_conv_hist 对比 pd_fp32: 逐行完全相同 692/929 (74.5%)，字符相似度 92.92%
+    原: 品
+    量: 8
+    原: Q商品名/订单号/快递单号
+    量: 商品名/订单号/快递单号
+    原: 包裹
+    量: 包里
+    原: 全部 待付 待发货
+    量: 全部待支付待发货
+    原: 盖世小鸡官旗舰店旗舰
+    量: 盖世鸡官旗舰店旗舰
+    原: 山
+    量: 
+RESULT pd_int8_conv_hist_old 对比 pd_fp32: 逐行完全相同 683/929 (73.5%)，字符相似度 92.72%
+    原: 品
+    量: 80
+    原: Q商品名/订单号/快递单号
+    量: 商品名/订单号/快递单号
+    原: 包裹
+    量: 包里
+    原: 全部 待付 待发货
+    量: 全部待支付待发货
+    原: 山
+    量: 
+    原: 【百元卷王】盖世鸡启.
+    量: 【百元卷王】盖世小鸡启..
+RESULT pd_int8_conv_mse 对比 pd_fp32: 逐行完全相同 520/929 (56.0%)，字符相似度 87.14%
+    原: 品
+    量: 080
+    原: 包裹
+    量: 包
+    原: 全部 待付 待发货
+    量: 全部銀待付銀待发货
+    原: 售后
+    量: 
+    原: 盖世小鸡官旗舰店旗舰
+    量: 盖世小鸡官方旗舰店心旗舰
+    原: 【百元卷王】盖世鸡启.
+    量: 【百元卷王】世小鸡启…

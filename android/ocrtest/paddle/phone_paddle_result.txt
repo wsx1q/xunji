@@ -1,0 +1,13 @@
+=== 1. 手机  11:11:10
+  vivo V1938CT，Android 10
+=== 2. Paddle Lite 2.14-rc 官方测速程序 benchmark_bin（安卓 arm64，约 20MB）
+  D:\work\jizhang\android\ocrtest\paddle\work\benchmark_bin_armv8_clang: 1 file pushed, 0 skipped. 29.7 MB/s (19861552 bytes in 0.637s)
+  支持 --threads: True，--power_mode: True
+=== 3. 传模型
+  pd_det_fp32            4.5 MB
+  pd_fp32                15.7 MB
+  pd_int8_all_hist       4.3 MB
+  pd_int8_conv_avg       11.1 MB
+  pd_int8_conv_hist      11.1 MB
+  pd_int8_conv_hist_old  15.7 MB
+  pd_int8_conv_mse       11.1 MB

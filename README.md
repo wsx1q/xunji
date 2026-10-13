@@ -3,7 +3,20 @@
 离线记账 App（Android）。界面是 WebView 里的一个单页应用，数据用 AES-256-GCM 加密后只存在本机（或你指定的目录），不联网。
 支持多账本、二级分类、子账户、预算、报表、自定义看板，能导入支付宝 / 微信账单、官方「随手记」备份（.kbf），OCR 版还能识别淘宝 / 京东 / 拼多多 / 抖音的订单截图。
 
-怎么用：[使用说明](docs/使用说明.md)（App 里「我的 → 使用说明」是简版）。
+怎么用：[使用说明](docs/使用说明.md)（App 里「我的 → 使用说明」是简版）。下载：[Releases](https://github.com/wsx1q/xunji/releases)。
+
+<p>
+  <img src="docs/img/home.png" width="32%" alt="首页">
+  <img src="docs/img/add.png" width="32%" alt="记一笔">
+  <img src="docs/img/list.png" width="32%" alt="流水">
+</p>
+<p>
+  <img src="docs/img/report.png" width="32%" alt="报表">
+  <img src="docs/img/accounts.png" width="32%" alt="账户">
+  <img src="docs/img/dash.png" width="32%" alt="首页看板">
+</p>
+
+<sub>截图为示例数据。</sub>
 
 ## 两个版本
 

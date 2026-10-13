@@ -5,6 +5,27 @@ const L0 = { type: 'all', q: '', cat: '', exact: false, member: '', note: '', li
 const LIST_PAGE = 200;
 function showList() { stack[stack.length - 1].name === 'list' ? render() : go('list'); }
 function openList(kind, cat = '') { Object.assign(L, L0, { kind, ref: Date.now(), cat, limit: LIST_PAGE, F: normBoard({}) }); showList(); }
+/* 搜索历史：搜索框失去焦点（按回车 / 点别处）时记下关键词，最多 8 个；搜索框为空且获得焦点时显示 */
+const Q_HIST_MAX = 8;
+const qHist = () => (Array.isArray(S.settings.searchHist) ? S.settings.searchHist : []);
+function qHistAdd(v) {
+  v = (v || '').trim();
+  if (!v || qHist()[0] === v) return;
+  S.settings.searchHist = [v, ...qHist().filter(x => x !== v)].slice(0, Q_HIST_MAX);
+  save();
+}
+function qHistShow(on) {
+  const box = $('#qhist'), q = $('#q'); if (!box) return;
+  const list = qHist();
+  if (!on || !list.length || (q && q.value.trim()) || document.activeElement !== q) { box.innerHTML = ''; return; }
+  // 按下时 preventDefault，搜索框不会先失去焦点把列表收起来
+  box.innerHTML = `<div class="qh-hd"><span>最近搜索</span><a onpointerdown="event.preventDefault()" onclick="S.settings.searchHist=[];save();qHistShow(false)">清除</a></div>
+    <div class="qh-list">${list.map(v => `<i class="chip" data-v="${esc(v)}" onpointerdown="event.preventDefault()" onclick="qHistUse(this.dataset.v)">${esc(v)}</i>`).join('')}</div>`;
+}
+function qHistUse(v) {
+  const q = $('#q'); if (q) { q.value = v; q.blur(); }
+  L.q = v; L.limit = LIST_PAGE; renderListBody();
+}
 function openSearch() { Object.assign(L, L0, { kind: 'all', limit: LIST_PAGE, F: normBoard({}) }); tab('list'); setTimeout(() => $('#q') && $('#q').focus(), 50); }
 
 /* ---------- 流水页筛选栏：像 Excel 表头的下拉筛选，条件和自定义看板同一套（L.F 结构同 normBoard），随时改、可存成看板 ---------- */
@@ -27,8 +48,11 @@ function lfPick(k) { L.F.type = L.type; BD = L.F; L.limit = LIST_PAGE; LF_FIELDS
 function lfClear(k, ev) { if (ev) ev.stopPropagation(); LF_FIELDS[k].clear(); L.limit = LIST_PAGE; render(); }
 function lfClearAll() { L.F = normBoard({}); L.cat = L.member = L.note = ''; L.limit = LIST_PAGE; render(); }
 function pickLfAmount() {
-  openSheet('金额区间', `<div class="btn-row"><input id="lfMin" class="field" type="number" inputmode="decimal" min="0" placeholder="最低（不限）" value="${L.F.min}">
-    <input id="lfMax" class="field" type="number" inputmode="decimal" min="0" placeholder="最高（不限）" value="${L.F.max}"></div>
+  const quick = (n, a, b) => `<i class="chip ${L.F.min === a && L.F.max === b ? 'on' : ''}" onclick="L.F.min=${a === '' ? "''" : a};L.F.max=${b === '' ? "''" : b};L.limit=${LIST_PAGE};closeSheet();render()">${n}</i>`;
+  openSheet('金额区间', `<div class="chips" style="flex-wrap:wrap;margin-bottom:10px">${quick('小于 0（负数）', '', -0.01)}${quick('大于 0', 0.01, '')}</div>
+    <div class="btn-row"><input id="lfMin" class="field" type="number" inputmode="decimal" placeholder="最低（不限）" value="${L.F.min}">
+    <input id="lfMax" class="field" type="number" inputmode="decimal" placeholder="最高（不限）" value="${L.F.max}"></div>
+    <div class="tip" style="margin-top:0">可以填负数，比如最高填 -0.01 就是只看负数金额的记录</div>
     <div class="btn-row"><button class="btn ghost" style="color:#555" onclick="L.F.min=L.F.max='';closeSheet();render()">不限</button>
     <button class="btn" onclick="lfAmountOk()">确定</button></div>`);
   setTimeout(() => $('#lfMin') && $('#lfMin').focus(), 150);
@@ -36,9 +60,9 @@ function pickLfAmount() {
 function lfAmountOk() {
   const a = $('#lfMin').value.trim(), b = $('#lfMax').value.trim();
   const min = a === '' ? '' : r2(+a), max = b === '' ? '' : r2(+b);
-  if ((min !== '' && !(min >= 0)) || (max !== '' && !(max >= 0))) return toast('金额请填写不小于 0 的数字');
+  if ((min !== '' && Number.isNaN(min)) || (max !== '' && Number.isNaN(max))) return toast('金额请填写数字');
   if (min !== '' && max !== '' && max < min) return toast('最高金额不能小于最低金额');
-  L.F.min = min; L.F.max = max; closeSheet(); render();
+  L.F.min = min; L.F.max = max; L.limit = LIST_PAGE; closeSheet(); render();
 }
 function pickLfNote() {
   openSheet('备注包含', `<input id="lfNote" class="field" placeholder="备注关键词" maxlength="20" value="${esc(L.F.note)}" onkeydown="if(event.key==='Enter')lfNoteOk()">
@@ -72,9 +96,11 @@ Pages.list = () => {
   const kinds = [['day', '日'], ['week', '周'], ['month', '月'], ['year', '年'], ['all', '全部']];
   return `<div class="l-hd grad">${stack.length > 1 ? '<b class="l-bk" onclick="back()">‹</b>' : ''}
     <div class="seg">${kinds.map(([k, n]) => `<i class="${!lfDates() && L.kind === k ? 'on' : ''}" onclick="L.kind='${k}';L.ref=Date.now();L.F.start=L.F.end='';L.limit=${LIST_PAGE};render()">${n}</i>`).join('')}</div>
-    <div class="period">${lfDates() ? `<span onclick="lfPick('time')">${esc(whenText(L.F))}</span>` : L.kind === 'custom' ? `<span>${esc(L.label)}</span>` : L.kind === 'all' ? '<span>全部时间</span>' : `<b onclick="shiftL(-1)">‹</b><span>${periodLabel(L.kind, L.ref)}</span><b class="${isFuture(L.kind, L.ref) ? 'dis' : ''}" onclick="shiftL(1)">›</b>`}</div>
+    <div class="period">${lfDates() ? `<span onclick="lfPick('time')">${esc(whenText(L.F))}</span>` : L.kind === 'custom' ? `<span>${esc(L.label)}</span>` : L.kind === 'all' ? '<span>全部时间</span>' : `<b onclick="shiftL(-1)">‹</b><span class="pp" onclick="periodSheet(L.kind,L.ref,t=>{L.ref=t;L.limit=LIST_PAGE;render()})">${periodLabel(L.kind, L.ref)}</span><b class="${isFuture(L.kind, L.ref) ? 'dis' : ''}" onclick="shiftL(1)">›</b>`}</div>
     <div class="sum3" id="lsum"></div></div>
-  <div class="filters"><input id="q" class="search" placeholder="搜索备注 / 分类 / 账户 / 商家 / 项目 / 金额" value="${esc(L.q)}" oninput="L.q=this.value;L.limit=${LIST_PAGE};clearTimeout(L._qt);L._qt=setTimeout(renderListBody,180)">
+  <div class="filters"><input id="q" class="search" placeholder="搜索备注 / 分类 / 账户 / 商家 / 项目 / 金额" value="${esc(L.q)}" oninput="L.q=this.value;L.limit=${LIST_PAGE};clearTimeout(L._qt);L._qt=setTimeout(renderListBody,180);qHistShow(true)"
+      onfocus="qHistShow(true)" onblur="qHistAdd(this.value);setTimeout(()=>qHistShow(false),200)" onkeydown="if(event.key==='Enter')this.blur()" enterkeyhint="search">
+    <div id="qhist" class="qhist"></div>
     <div class="chips">${[['all', '全部'], ['expense', '支出'], ['income', '收入'], ['transfer', '转账'], ['adjust', '余额变更']].map(([k, n]) => `<i class="chip ${L.type === k ? 'on' : ''}" onclick="L.type='${k}';L.limit=${LIST_PAGE};render()">${n}</i>`).join('')}
     ${L.cat ? `<i class="chip on" onclick="L.cat='';L.limit=${LIST_PAGE};render()">${catById(L.cat).icon} ${esc(catLabel(L.cat))}${L.exact && subsOf(L.cat).length ? '（未细分）' : ''} ✕</i>` : ''}
     ${L.member ? `<i class="chip on" onclick="L.member='';L.limit=${LIST_PAGE};render()">👤 ${esc(L.member)} ✕</i>` : ''}

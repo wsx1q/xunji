@@ -56,7 +56,8 @@ Pages.add = () => {
     : `<div class="cgrid">${rec.length ? `<div class="cg-i ${curTop === '__recent__' ? 'on' : ''}" data-id="__recent__" onclick="pickRecent()"><div class="ci" style="--cc:#FF8A65;background:#FF8A6526">🕒</div><span>最近使用</span></div>` : ''}
        ${cats.map(c => `<div class="cg-i ${c.id === curTop ? 'on' : ''}" data-id="${c.id}" data-lp="cat" data-lpid="${c.id}" data-lpg="${E.type}|" onclick="pickCat('${c.id}')"><div class="ci" style="--cc:${c.color};background:${c.color}26">${c.icon}</div><span>${esc(c.name)}</span></div>`).join('')}
        <div class="cg-i" onclick="CT=E.type;go('cats')"><div class="ci ci-set">⚙️</div><span>设置</span></div></div>`;
-  const keys = [['1'], ['2'], ['3'], ['del', '⌫', 'fn'], ['4'], ['5'], ['6'], ['+', '+', 'fn'], ['7'], ['8'], ['9'], ['-', '−', 'fn'], ['again', E.editId ? '取消' : '再记', 'fn'], ['0'], ['.'], ['ok', '完成', 'ok']];
+  // 右上角一格分成 AC（清空）和 ⌫ 两个半宽键，整体还是 4×4，键盘高度不变
+  const keys = [['1'], ['2'], ['3'], ['acdel'], ['4'], ['5'], ['6'], ['+', '+', 'fn'], ['7'], ['8'], ['9'], ['-', '−', 'fn'], ['again', E.editId ? '取消' : '再记', 'fn'], ['0'], ['.'], ['ok', '完成', 'ok']];
   return `<div class="add">
     <header class="add-hd"><b class="bk" onclick="back()">✕</b>
       <div class="seg">${[['expense', '支出'], ['income', '收入'], ['transfer', '转账']].map(([k, n]) => `<i class="${E.type === k ? 'on' : ''}" onclick="setType('${k}')">${n}</i>`).join('')}</div>
@@ -76,7 +77,7 @@ Pages.add = () => {
         ${S.books.length > 1 ? `<i class="chip" onclick="pickTxBook()">📒 ${esc((S.books.find(b => b.id === E.bookId) || curBook()).name)}</i>` : ''}
       </div>
       <input class="note" placeholder="添加备注..." value="${esc(E.note)}" oninput="E.note=this.value" maxlength="60">
-      <div class="keys">${keys.map(([k, l, c]) => `<button class="k ${c || ''}" ${k === 'ok' ? 'id="kok"' : ''} onclick="${k === 'ok' ? 'saveTx(false)' : k === 'again' ? (E.editId ? 'back()' : 'saveTx(true)') : `key('${k}')`}">${l || k}</button>`).join('')}</div>
+      <div class="keys">${keys.map(([k, l, c]) => k === 'acdel' ? `<div class="k2"><button class="k fn" onclick="key('ac')">AC</button><button class="k fn" onclick="key('del')">⌫</button></div>` : `<button class="k ${c || ''}" ${k === 'ok' ? 'id="kok"' : ''} onclick="${k === 'ok' ? 'saveTx(false)' : k === 'again' ? (E.editId ? 'back()' : 'saveTx(true)') : `key('${k}')`}">${l || k}</button>`).join('')}</div>
     </div></div>`;
 };
 After.add = () => { updAmt(); updCat(); renderSubRow(); };
@@ -164,8 +165,13 @@ function key(k) {
   if (E.fresh) { E.fresh = false; if (/^[\d.]$/.test(k)) E.expr = ''; }
   let s = E.expr;
   const last = s.split(/[+\-]/).pop();
-  if (k === 'del') s = s.slice(0, -1);
-  else if (k === '+' || k === '-') { if (!s) return; if (/[+\-]$/.test(s)) s = s.slice(0, -1); s += k; }
+  if (k === 'ac') s = '';
+  else if (k === 'del') s = s.slice(0, -1);
+  else if (k === '+' || k === '-') {
+    // 开头按 − 就是输入负数（如退款记成负的支出）；只有一个负号时再按 + 等于取消负号
+    if (!s || s === '-') s = k === '-' ? '-' : '';
+    else { if (/[+\-]$/.test(s)) s = s.slice(0, -1); s += k; }
+  }
   else if (k === '.') { if (last.includes('.')) return; s += last === '' ? '0.' : '.'; }
   else {
     if (/\.\d{2}$/.test(last)) return;
@@ -177,7 +183,7 @@ function key(k) {
 }
 function updAmt() {
   if (!$('#amt')) return;
-  $('#expr').textContent = /[+\-]/.test(E.expr) ? E.expr : '';
+  $('#expr').textContent = /\d[+\-]/.test(E.expr) ? E.expr : ''; // 只有一个负数时不重复显示算式
   $('#amt').textContent = money(evalExpr(E.expr));
   $('#amt').classList.toggle('fresh', !!E.fresh);
   $('#kok').textContent = hasOp(E.expr) ? '=' : '完成';
@@ -185,7 +191,8 @@ function updAmt() {
 function saveTx(again) {
   if (hasOp(E.expr)) { E.expr = String(evalExpr(E.expr)); updAmt(); return; }
   const amt = evalExpr(E.expr);
-  if (!(amt > 0)) return toast('请输入金额');
+  if (!amt) return toast('请输入金额');
+  if (amt < 0 && E.type === 'transfer') return toast('转账金额不能为负，可以点 ⇅ 交换转出和转入账户');
   if (E.type === 'transfer' && (!E.toAccountId || E.accountId === E.toAccountId)) return toast('转出和转入账户不能相同');
   const isT = E.type === 'transfer';
   const rec = {

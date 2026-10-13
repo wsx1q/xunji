@@ -90,7 +90,9 @@ function whenText(b) {
   const [s, e] = boardRange(b);
   return b.start && b.end ? `${cnDate(s)} - ${cnDate(e - 864e5)}` : b.start ? `${cnDate(s)}以后` : b.end ? `${cnDate(e - 864e5)}以前` : '全部时间';
 }
-const amountText = b => b.min !== '' && b.max !== '' ? `${b.min} - ${b.max} 元` : b.min !== '' ? `≥ ${b.min} 元` : b.max !== '' ? `≤ ${b.max} 元` : '';
+// 「小于 0」「大于 0」用 max = -0.01 / min = 0.01 表示（金额都是两位小数）
+const amountText = b => b.min === '' && +b.max === -0.01 ? '< 0 元' : +b.min === 0.01 && b.max === '' ? '> 0 元'
+  : b.min !== '' && b.max !== '' ? `${b.min} - ${b.max} 元` : b.min !== '' ? `≥ ${b.min} 元` : b.max !== '' ? `≤ ${b.max} 元` : '';
 function boardMatch(b) {
   const min = b.min === '' ? -Infinity : +b.min, max = b.max === '' ? Infinity : +b.max;
   return t => (b.type === 'all' || t.type === b.type)

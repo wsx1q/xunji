@@ -121,6 +121,32 @@ function renderDateSheet() {
   const row = $('#dsY'), on = row && row.querySelector('.chip.on');
   if (on) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
 }
+/** 时间段快速选择（流水 / 报表顶部点年月）：月 → 先选年再选月；年 → 选年；日 / 周 → 日历选一天。cb(该时间段内的某个时间点) */
+let PS = null;
+function periodSheet(kind, ref, cb) {
+  if (kind === 'day' || kind === 'week') return dateSheet(kind === 'day' ? '选择日期' : '选择这一周里的任意一天', ymd(ref), v => cb(parseYmd(v)), { max: ymd(Date.now()) });
+  const d = new Date(ref), nowY = new Date().getFullYear();
+  let minY = nowY - 2;
+  if (S && S.txns.length) minY = Math.min(minY, new Date(S.txns[S.txns.length - 1].time).getFullYear());
+  PS = { kind, y: d.getFullYear(), y0: d.getFullYear(), m0: d.getMonth() + 1, minY, cb };
+  renderPeriodSheet();
+}
+function renderPeriodSheet() {
+  const now = new Date(), nowY = now.getFullYear(), nowM = now.getMonth() + 1, years = [];
+  for (let y = nowY; y >= PS.minY; y--) years.push(y);
+  if (PS.kind === 'year') {
+    openSheet('选择年份', `<div class="ps-grid">${years.map(y => `<i class="chip ${y === PS.y0 ? 'on' : ''}" onclick="periodOk(${y},1)">${y}年</i>`).join('')}</div>`);
+    return;
+  }
+  openSheet('选择月份', `<div class="cal-y" id="psY">${years.map(y => `<i class="chip ${y === PS.y ? 'on' : ''}" onclick="PS.y=${y};renderPeriodSheet()">${y}年</i>`).join('')}</div>
+    <div class="ps-grid">${Array.from({ length: 12 }, (_, i) => i + 1).map(m => {
+      const dis = PS.y === nowY && m > nowM, on = PS.y === PS.y0 && m === PS.m0;
+      return `<i class="chip ${on ? 'on' : ''} ${dis ? 'dis' : ''}" onclick="${dis ? '' : `periodOk(${PS.y},${m})`}">${m}月</i>`;
+    }).join('')}</div>`);
+  const on = $('#psY .chip.on'), row = $('#psY');
+  if (on && row) row.scrollLeft = on.offsetLeft - (row.clientWidth - on.offsetWidth) / 2;
+}
+function periodOk(y, m) { const cb = PS.cb; closeSheet(); cb(new Date(y, m - 1, 1).getTime()); }
 function numberSheet(title, val, fn, allowNeg = false) {
   _sheetCb = fn;
   openSheet(title, `<input id="numIn" class="field" type="number" inputmode="decimal" step="0.01" value="${val || ''}" placeholder="请输入金额">
@@ -168,7 +194,9 @@ function txItem(t, opt = {}) {
     const c = catById(t.catId); icon = c.icon; color = topOf(t.catId).color; name = esc(catLabel(t.catId));
     sub = [time, esc(accName(t.accountId)), t.member && t.member !== '本人' && esc(t.member)].filter(Boolean).join(' · ');
     sub2 = [t.merchant && '🏪' + esc(t.merchant), t.project && '📁' + esc(t.project), t.note && esc(t.note)].filter(Boolean).join(' · ');
-    sign = t.type === 'expense' ? '-' : '+';
+    // 负数金额（如记成负支出的退款）：支出 -(-5) 显示 +5.00、颜色同收入；负收入显示 -5.00
+    sign = (t.type === 'expense') === (t.amount >= 0) ? '-' : '+';
+    if (t.amount < 0) { amt = -t.amount; cls = t.type === 'expense' ? 'income' : 'expense'; }
   }
   return `<div class="tx-w ${SEL && SEL.has(t.id) ? 'on' : ''}" data-id="${t.id}"><div class="tx-act"><i class="cp" onclick="txCopy('${t.id}')">⧉<br>复制</i><i class="ed" onclick="txTap('${t.id}',1)">✎<br>编辑</i><i class="dl" onclick="txDel('${t.id}')">🗑<br>删除</i></div>
     <div class="tx" onclick="txTap('${t.id}')"><i class="tx-ck"></i><div class="ci" style="background:${color}26">${icon}</div>

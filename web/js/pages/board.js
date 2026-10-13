@@ -16,7 +16,7 @@ Pages.boardEdit = () => {
     ${row('🕘', '时间', whenText(BD), 'pickBdTime()')}
     ${row('🗂️', '分类', namesText(BD.cats.map(catLabel)), 'pickBdCats()')}
     ${row('💳', '账户', namesText(BD.accs.map(accName)), 'pickBdAccs()')}
-    <div class="fr"><i>💎</i><span>金额区间</span><input class="be-num" type="number" inputmode="decimal" min="0" value="${BD.min}" placeholder="不限" oninput="BD.min=this.value"><small>–</small><input class="be-num" type="number" inputmode="decimal" min="0" value="${BD.max}" placeholder="不限" oninput="BD.max=this.value"></div>
+    <div class="fr"><i>💎</i><span>金额区间</span><input class="be-num" type="number" inputmode="decimal" value="${BD.min}" placeholder="不限" oninput="BD.min=this.value"><small>–</small><input class="be-num" type="number" inputmode="decimal" value="${BD.max}" placeholder="不限" oninput="BD.max=this.value"></div>
     ${row('🏪', '商家', namesText(BD.merchants.map(m => m || '无商家')), "pickBdTags('merchant')")}
     ${row('📁', '项目', namesText(BD.projects.map(m => m || '无项目')), "pickBdTags('project')")}
     ${row('👥', '成员', namesText(BD.members), "pickBdTags('member')")}
@@ -76,7 +76,7 @@ function saveBoard() {
   const name = (BD.name || '').trim(); if (!name) return toast('请输入看板名称');
   if (BD.start && BD.end && BD.end < BD.start) return toast('结束日期不能早于开始日期');
   const min = BD.min === '' ? '' : r2(+BD.min), max = BD.max === '' ? '' : r2(+BD.max);
-  if ((min !== '' && !(min >= 0)) || (max !== '' && !(max >= 0))) return toast('金额请填写不小于 0 的数字');
+  if ((min !== '' && Number.isNaN(min)) || (max !== '' && Number.isNaN(max))) return toast('金额请填写数字');
   if (min !== '' && max !== '' && max < min) return toast('最高金额不能小于最低金额');
   const rec = normBoard({ ...BD, id: BD.id || 'c' + uid(), name, min, max, note: BD.note.trim() });
   const list = S.settings.home.boards, i = list.findIndex(x => x.id === rec.id);

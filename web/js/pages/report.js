@@ -2,6 +2,8 @@
 /* 报表 */
 const R = { kind: 'month', ref: Date.now(), type: 'expense', pcat: '' };
 function donutSvg(items, total, size = 190, sw = 30) {
+  // 有负数金额（退款记成负支出）时，分类合计可能是负的：环形图只画正的部分
+  items = items.filter(it => it.amt > 0); total = items.reduce((a, it) => a + it.amt, 0);
   const r = (size - sw) / 2, C = 2 * Math.PI * r, c = size / 2;
   let acc = 0, segs = '';
   if (!total) segs = `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#F1F2F4" stroke-width="${sw}"/>`;
@@ -72,7 +74,7 @@ Pages.report = () => {
       <div class="seg">${[['expense', '支出'], ['income', '收入']].map(([k, n]) => `<i class="${R.type === k ? 'on' : ''}" onclick="R.type='${k}';R.pcat='';render()">${n}</i>`).join('')}</div>
       <div class="seg">${[['month', '月报'], ['year', '年报']].map(([k, n]) => `<i class="${R.kind === k ? 'on' : ''}" onclick="R.kind='${k}';R.ref=Date.now();render()">${n}</i>`).join('')}</div>
     </div>
-    <div class="period"><b onclick="R.ref=shiftRef(R.kind,R.ref,-1);render()">‹</b><span>${periodLabel(R.kind, R.ref)}</span><b class="${isFuture(R.kind, R.ref) ? 'dis' : ''}" onclick="R.ref=shiftRef(R.kind,R.ref,1);render()">›</b></div>
+    <div class="period"><b onclick="R.ref=shiftRef(R.kind,R.ref,-1);render()">‹</b><span class="pp" onclick="periodSheet(R.kind,R.ref,t=>{R.ref=t;render()})">${periodLabel(R.kind, R.ref)}</span><b class="${isFuture(R.kind, R.ref) ? 'dis' : ''}" onclick="R.ref=shiftRef(R.kind,R.ref,1);render()">›</b></div>
     <div class="sum3">${sum3(all)}</div></div>
   <div class="card"><div class="card-hd">${R.pcat ? `<b><a onclick="R.pcat='';render()" style="color:var(--c);font-size:15px">‹ 全部</a> ${esc(catById(R.pcat).name)} · 二级分类</b>` : `<b>${tName}构成</b>`}<small>共 ${tx.length} 笔</small></div>
     <div class="donut-wrap">${donutSvg(items, total)}<div class="donut-c"><small>${R.pcat ? esc(catById(R.pcat).name) : '总' + tName}</small><b>${money(total)}</b></div></div>

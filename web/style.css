@@ -494,3 +494,19 @@ i{font-style:normal}
 .cat-subs .chip .cnt.zero{color:var(--t3)}
 .cat-n{font-size:12.5px;color:var(--t2);line-height:1.6;background:#F7F8FA;border-radius:10px;padding:8px 12px;margin-top:12px}
 .cat-n b{color:var(--t1)}
+/* 记账键盘：右上角一格分成 AC 和 ⌫ */
+.k2{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#E8E9EC}
+.k2 .k{font-size:15px}
+/* 时间段快速选择 */
+.ps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:6px 0 14px}
+.ps-grid .chip{justify-content:center;padding:10px 0;font-size:14px}
+.chip.dis{opacity:.35;pointer-events:none}
+.period .pp{cursor:pointer}
+.period .pp:after{content:' ▾';font-size:11px;opacity:.8}
+/* 搜索历史 */
+.qhist:empty{display:none}
+.qhist{background:#fff;border-radius:12px;padding:8px 12px 10px;margin:8px 0 2px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.qh-hd{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);padding-bottom:6px}
+.qh-hd a{color:var(--t2);cursor:pointer}
+.qh-list{display:flex;flex-wrap:wrap;gap:6px}
+.qh-list .chip{max-width:9em;overflow:hidden;text-overflow:ellipsis}

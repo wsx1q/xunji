@@ -27,34 +27,64 @@ function setCatBudget(id) {
 
 /* ================= 分类管理 ================= */
 let CT = 'expense', CE = null;
-/** 分类下的记录数（所有账本）；一级分类算上它的二级分类 */
-const catCounts = () => countBy(t => t.catId);
+/** 分类下的记录数（所有账本）；一级分类算上它的二级分类。数据没变时用缓存（invalidateCache 会清掉） */
+const catCounts = () => _cache.catCnt || (_cache.catCnt = countBy(t => t.catId));
 const catTotal = (cnt, id) => (cnt.get(id) || 0) + subsOf(id).reduce((a, s) => a + (cnt.get(s.id) || 0), 0);
+/* ================= 分类网格：记一笔、分类管理、所有选分类的面板共用 =================
+   一级分类是图标网格（和记一笔一样），点一个在下面一行展开它的二级分类；图标右上角的数字是记录笔数。
+   短按 = 选择（分类管理里：点一级展开、点二级编辑）；长按 = 编辑（改名、图标、删除、合并）；长按后拖动排序。 */
+const cgNum = n => (n ? `<i class="cg-n">${n > 9999 ? '9999+' : n}</i>` : '');
+/** 一级分类的图标格子（记一笔页也用这个） */
+function cgTile(c, { on, open, n, tap, lp, type }) {
+  return `<div class="cg-i ${on ? 'on' : ''} ${open ? 'open' : ''}" data-id="${c.id}" ${lp ? `data-lp="${lp}" data-lpid="${c.id}" data-lpg="${type}|"` : ''} onclick="${tap}"><div class="ci" style="--cc:${c.color};background:${c.color}26">${c.icon}${cgNum(n)}</div><span>${esc(c.name)}</span></div>`;
+}
+/** 二级分类的小标签 */
+function cgChip(s, { on, n, tap, lp, type }) {
+  return `<i class="chip ${on ? 'on' : ''}" data-v="${s.id}" ${lp ? `data-lp="${lp}" data-lpid="${s.id}" data-lpg="${type}|${s.pid}"` : ''} onclick="${tap}">${s.icon} ${esc(s.name)}${n ? `<i class="cnt">${n}</i>` : ''}</i>`;
+}
 /**
- * 分类卡片：分类管理页和筛选面板共用同一套样子和操作。
- * 一级分类是一行标题（大图标、粗体名字），二级分类是下面的小标签；有记录的分类后面显示笔数（只显示数字）。
- * 长按任何一个分类都弹出编辑（改名、图标、删除、合并），长按后拖动排序。
- * pick：选择模式 { sel: 已选 id, fn: 点击时调用的函数名, multi: 多选（选一级即包含其下二级）, noLp: 不能长按编辑 }，
- * 长按编辑完回到打开它的选择面板（_catPickReopen）。
+ * 网格状态 CGS[key] = { type, mode: 'manage' | 'single' | 'multi', open: 展开的一级分类, sel: 已选 id,
+ *   pick(id): 单选选中, toggle(id): 多选切换, rerender(): 重画, noLp: 不能长按编辑 }
+ * 选一级分类本身：单选时点下面一行的「只记到 X」，多选时点「全部 X」（包含其下所有二级分类）。
  */
-let _catPickReopen = null;
-function catCardsHtml(type, pick) {
-  const cnt = catCounts(), lp = pick ? 'catpick' : 'cat';
-  const num = n => (n ? `<i class="cnt">${n}</i>` : '');
-  const lpAttr = (id, g) => (pick && pick.noLp ? '' : `data-lp="${lp}" data-lpid="${id}" data-lpg="${g}"`);
-  return tops(type).map(c => {
-    const subs = subsOf(c.id), on = !!pick && pick.sel.includes(c.id);
-    const tap = id => (pick ? `${pick.fn}('${id}')` : `editCat('${id}')`);
-    return `<div class="cat-card ${pick ? 'pick' : 'card'} ${on ? 'on' : ''}" ${lpAttr(c.id, type + '|')}>
-      <div class="cat-top" onclick="${tap(c.id)}"><div class="ci" style="background:${c.color}26">${c.icon}</div><b>${esc(c.name)}</b>${num(catTotal(cnt, c.id))}<small>${subs.length ? subs.length + ' 个二级分类' : ''}</small><em>${pick ? (on ? '✓ 已选' : '') : '编辑'}</em></div>
-      <div class="cat-subs">${subs.map(s => `<i class="chip ${(on && pick.multi) || (pick && pick.sel.includes(s.id)) ? 'on' : ''}" data-v="${s.id}" ${lpAttr(s.id, `${type}|${c.id}`)} onclick="${tap(s.id)}">${s.icon} ${esc(s.name)}${num(cnt.get(s.id) || 0)}</i>`).join('')}${pick ? '' : `<i class="chip sub-add" onclick="editCat('','${c.id}')">＋ 二级分类</i>`}</div></div>`;
-  }).join('');
+const CGS = {};
+let _catPickReopen = null; // 面板里长按编辑完回到这个面板
+function catGridHtml(key) {
+  const st = CGS[key], cnt = catCounts(), list = tops(st.type), sel = st.sel || [];
+  if (!list.some(t => t.id === st.open)) st.open = (list.find(t => sel.some(id => inCat(id, t.id))) || list[0] || {}).id || '';
+  const lp = st.noLp ? '' : st.mode === 'manage' ? 'cat' : 'catpick';
+  const grid = list.map(t => cgTile(t, { on: st.mode !== 'manage' && sel.some(id => inCat(id, t.id)), open: t.id === st.open,
+    n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type })).join('');
+  const top = list.find(t => t.id === st.open);
+  let sub = '';
+  if (top) {
+    const all = sel.includes(top.id);
+    const whole = st.mode === 'single' ? `<i class="chip ${all ? 'on' : ''}" onclick="cgPick('${key}','${top.id}')">只记到「${esc(top.name)}」</i>`
+      : st.mode === 'multi' ? `<i class="chip ${all ? 'on' : ''}" onclick="cgPick('${key}','${top.id}')">全部「${esc(top.name)}」</i>` : '';
+    sub = `<div class="cg-sub"><small>${top.icon} ${esc(top.name)} ›</small>${whole}${subsOf(top.id).map(s => cgChip(s, { on: sel.includes(s.id) || (st.mode === 'multi' && all),
+      n: cnt.get(s.id) || 0, tap: `cgPick('${key}','${s.id}')`, lp, type: st.type })).join('')}${st.mode === 'manage' ? `<i class="chip sub-add" onclick="editCat('','${top.id}')">＋ 二级分类</i>` : ''}</div>`;
+  }
+  return `<div class="cgrid">${grid}</div>${sub}`;
+}
+function cgTop(key, id) {
+  const st = CGS[key];
+  // 单选时没有二级分类的一级分类，点一下就选中
+  if (st.mode === 'single' && !subsOf(id).length) return st.pick(id);
+  st.open = id;
+  st.rerender();
+}
+function cgPick(key, id) {
+  const st = CGS[key];
+  if (st.mode === 'manage') return editCat(id);
+  if (st.mode === 'single') return st.pick(id);
+  st.toggle(id);
 }
 Pages.cats = () => {
+  const st = CGS.manage || (CGS.manage = { mode: 'manage', open: '', rerender: () => render() });
+  st.type = CT;
   return hdr('分类管理', `<a onclick="editCat()">＋ 一级</a>`) + `<div style="text-align:center;padding:14px 0 0"><div class="seg light">${[['expense', '支出分类'], ['income', '收入分类']].map(([k, n]) => `<i class="${CT === k ? 'on' : ''}" onclick="CT='${k}';render()">${n}</i>`).join('')}</div></div>
-  ${catCardsHtml(CT)}
-  <div class="card"><div class="cat-top" onclick="editCat()"><div class="ci ci-set">＋</div><b>添加一级分类</b></div></div>
-  <div class="ver">分类后面的数字是记录笔数。点击或长按分类可以改名、换图标、删除、合并；长按后拖动调整顺序</div>`;
+  <div class="card cg-card">${catGridHtml('manage')}</div>
+  <div class="ver">图标上的数字是记录笔数。点一级分类展开它的二级分类；长按任何分类可以改名、换图标、删除、合并，长按后拖动调整顺序</div>`;
 };
 /* 从筛选面板长按进来编辑：保存 / 删除 / 合并后回到筛选面板 */
 let _catReturn = null;

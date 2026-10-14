@@ -52,7 +52,11 @@ Pages.account = id => {
 const AV = { tx: [], acc: '' };
 After.account = () => { const b = $('#abody'); if (b) vlMount(b, AV.tx, AV.acc, AV.tx.length > 20 ? `<div class="l-more dim">共 ${AV.tx.length} 笔</div>` : ''); };
 let AE = null;
-function editAcc(id, pid = '') {
+/* 从选择面板（记一笔、筛选）长按进来编辑：保存 / 删除 / 合并后回到那个面板 */
+let _accReturn = null;
+function accBack() { const r = _accReturn; _accReturn = null; if (r) r(); }
+function editAcc(id, pid = '', ret = null) {
+  _accReturn = ret;
   const a = id && accById(id), p = pid && accById(pid);
   AE = a ? { pid: '', ...a, _bal: balances()[a.id] } : { id: '', name: '', type: p ? p.type : 'debit', pid: p ? p.id : '', init: 0, _bal: 0 };
   renderAccSheet();
@@ -91,7 +95,7 @@ function saveAcc() {
   const note = $('#aNote').value.trim() || undefined;
   if (!AE.id) {
     S.accounts.push({ id: uid(), name, type: AE.type, init: r2(parseFloat($('#aInit').value) || 0), pid, note });
-    save(); closeSheet(); toast('已保存'); render();
+    save(); closeSheet(); toast('已保存'); render(); accBack();
     return;
   }
   const old = accById(AE.id);
@@ -114,11 +118,11 @@ function saveAcc() {
   }
   save(); closeSheet();
   toast(delta !== 0 ? `已保存，并记入余额变更 ${delta >= 0 ? '+' : ''}${money(delta)}` : '已保存');
-  render();
+  render(); accBack();
 }
 function delAcc() {
   const used = S.txns.some(t => t.accountId === AE.id || t.toAccountId === AE.id);
   if (used) return toast('该账户下有流水记录，不能删除；可以用「合并到…」把记录转到别的账户');
   if (accKids(AE.id).length) return toast('请先删除或移走它的子账户');
-  askConfirm(`确定删除账户「${esc(AE.name)}」吗？`, () => { S.accounts = S.accounts.filter(a => a.id !== AE.id); save(); toast('已删除'); if (stack[stack.length - 1].name === 'account') back(); else render(); }, '删除');
+  askConfirm(`确定删除账户「${esc(AE.name)}」吗？`, () => { S.accounts = S.accounts.filter(a => a.id !== AE.id); save(); toast('已删除'); if (stack[stack.length - 1].name === 'account') back(); else render(); accBack(); }, '删除');
 }

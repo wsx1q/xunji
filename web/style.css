@@ -334,13 +334,6 @@ i{font-style:normal}
 .over{color:#E5484D!important}
 
 /* ---------- category manage ---------- */
-.cat-top{display:flex;align-items:center;gap:12px;padding:13px 0 10px;cursor:pointer}
-.cat-top b{font-size:15px}
-.cat-top small{flex:1;color:var(--t2);font-size:12px}
-.cat-top em{font-style:normal;color:var(--t2);font-size:12px}
-.cat-top em::after{content:" ›"}
-.cat-subs{display:flex;flex-wrap:wrap;gap:8px;padding:0 0 14px 52px}
-.cat-subs .chip.sub-add{background:none;border:1px dashed #D5D8DE;color:var(--t2)}
 .cm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px 0;padding:18px 0}
 .emo-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;max-height:180px;overflow-y:auto;margin-top:8px}
 .emo-grid i{height:38px;display:flex;align-items:center;justify-content:center;font-size:22px;border-radius:10px;cursor:pointer}
@@ -514,22 +507,28 @@ i{font-style:normal}
 /* 右上角的小 ✕：单独删除这个关键词（点的范围比看到的大一圈） */
 .qh-x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C9CDD4;color:#fff;font-size:9px;font-weight:400;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
 .qh-x::before{content:"";position:absolute;inset:-8px}
-/* 分类卡片（分类管理页、筛选面板共用）：记录笔数只显示数字 */
-.cat-top .cnt{font-style:normal;font-size:11.5px;color:var(--t2);background:#F2F3F5;border-radius:9px;padding:1px 7px;margin-left:-4px}
-.cat-subs .chip .cnt{font-style:normal;font-size:11px;color:var(--t3);margin-left:3px}
-.cat-subs .chip.on .cnt{color:var(--c);opacity:.7}
-.cat-card.pick{border-bottom:1px dashed var(--line)}
-.cat-card.pick:last-of-type{border-bottom:0}
-.cat-card.pick .cat-top{padding:11px 0 8px}
-.cat-card.pick .cat-top .ci{width:36px;height:36px;font-size:18px}
-.cat-card.pick .cat-subs{padding:0 0 12px 48px;gap:6px}
-.cat-card.pick .cat-top em{color:var(--c);font-weight:600}
-.cat-card.pick .cat-top em::after{content:''}
-.cat-card.pick.on .cat-top b{color:var(--c)}
 /* 记录笔数：分类、成员 / 商家 / 项目、账本处处同一个样子，只显示数字 */
-.opt .cnt,.bk-i .cnt,.cat-top .cnt{font-style:normal;font-size:11.5px;font-weight:400;color:var(--t2);background:#F2F3F5;border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:1px}
-.cat-top .cnt{margin-left:-4px}
+.opt .cnt,.bk-i .cnt{font-style:normal;font-size:11.5px;font-weight:400;color:var(--t2);background:#F2F3F5;border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:1px}
 .bk-ed{font-style:normal}
 .bk-ed::after{content:" ›"}
 /* 名单弹窗里「添加」按钮 */
 .btn.add-btn{margin:0;width:90px;flex:none;height:44px}
+/* 分类网格（记一笔、分类管理、选分类的面板共用）：图标右上角是记录笔数；展开的一级分类加一圈描边；下面一行是它的二级分类 */
+.cg-i .ci{position:relative}
+.cg-n{position:absolute;top:-5px;right:-11px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#fff;color:var(--t2);font-size:10px;font-style:normal;font-weight:500;line-height:17px;text-align:center;box-shadow:0 0 0 1px #ECEDF0}
+.cg-i.on .cg-n{color:var(--c)}
+.cg-i.open:not(.on) .ci{box-shadow:0 0 0 2px var(--cc)}
+.cg-i.open span{color:var(--t1);font-weight:600}
+.cg-i.on span{color:var(--c)}
+.cg-sub{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:12px 0 4px;margin-top:10px;border-top:1px dashed var(--line)}
+.cg-sub small{color:var(--t2);font-size:12px;flex:none;margin-right:2px}
+.cg-sub .chip{background:#fff;border:1px solid #EEE}
+.cg-sub .chip.on{background:#FFEDE5;border-color:#FFD2C0}
+.cg-sub .chip .cnt{font-style:normal;font-size:11px;color:var(--t3);margin-left:3px}
+.cg-sub .chip.on .cnt{color:var(--c);opacity:.75}
+.cg-sub .chip.sub-add{border:1px dashed #D5D8DE;color:var(--t2)}
+.subrow .chip .cnt{font-style:normal;font-size:11px;color:var(--t3);margin-left:3px}
+.subrow .chip.on .cnt{color:var(--c);opacity:.75}
+.cg-card{padding:16px 10px 12px}
+.cg-box{padding:6px 0 4px}
+.cg-box .cgrid{gap:14px 0}

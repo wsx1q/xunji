@@ -16,6 +16,9 @@ const LP_KINDS = {
     edit: (id, g) => { CT = g.split('|')[0]; editCat(id); },
     order: (ids, g) => reorderBy(S.categories[g.split('|')[0]], c => c.id, ids),
   },
+  // 选择面板里的账户、成员 / 商家 / 项目：编辑 / 排序完回到打开它的面板
+  accpick: { edit: id => editAcc(id, '', _pickReopen), order: ids => reorderBy(S.accounts, a => a.id, ids), after: () => _pickReopen && _pickReopen() },
+  tagpick: { edit: (v, f) => editTag(f, v, _pickReopen), order: (ids, f) => reorderBy(S[TAGS[f].list], x => x, ids), after: () => _pickReopen && _pickReopen() },
   // 选择面板里的分类：编辑 / 排序完回到打开它的面板
   catpick: {
     edit: (id, g) => { CT = g.split('|')[0]; editCat(id, '', _catPickReopen); },

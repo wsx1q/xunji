@@ -50,11 +50,11 @@ Pages.add = () => {
   if (!isT && !S.categories[E.type].some(c => c.id === E.catId)) { E.catId = defaultCatId(E.type); E.recentOn = rec.includes(E.catId); }
   if (!isT && E.recentOn && !rec.length) E.recentOn = false;
   const curTop = isT ? '' : (E.recentOn ? '__recent__' : topOf(E.catId).id);
-  const bal = balances();
+  const bal = balances(), cnt = catCounts(); // 分类图标上的数字是记录笔数，和分类管理一样
   const accCard = (field, label) => { const a = accById(E[field]); return `<div class="tf-card" onclick="pickAcc('${field}')"><small>${label}</small><b>${a ? accIcon(a) + ' ' + esc(accFull(a)) : '请选择账户'}</b><span>${a ? '余额 ' + money(bal[a.id]) : ''}</span></div>`; };
   const body = isT ? `<div class="tf">${accCard('accountId', '转出账户')}<div class="tf-sw" onclick="swapAcc()">⇅</div>${accCard('toAccountId', '转入账户')}</div>`
     : `<div class="cgrid">${rec.length ? `<div class="cg-i ${curTop === '__recent__' ? 'on' : ''}" data-id="__recent__" onclick="pickRecent()"><div class="ci" style="--cc:#FF8A65;background:#FF8A6526">🕒</div><span>最近使用</span></div>` : ''}
-       ${cats.map(c => `<div class="cg-i ${c.id === curTop ? 'on' : ''}" data-id="${c.id}" data-lp="cat" data-lpid="${c.id}" data-lpg="${E.type}|" onclick="pickCat('${c.id}')"><div class="ci" style="--cc:${c.color};background:${c.color}26">${c.icon}</div><span>${esc(c.name)}</span></div>`).join('')}
+       ${cats.map(c => cgTile(c, { on: c.id === curTop, n: catTotal(cnt, c.id), tap: `pickCat('${c.id}')`, lp: 'cat', type: E.type })).join('')}
        <div class="cg-i" onclick="CT=E.type;go('cats')"><div class="ci ci-set">⚙️</div><span>设置</span></div></div>`;
   // 右上角一格分成 AC（清空）和 ⌫ 两个半宽键，整体还是 4×4，键盘高度不变
   const keys = [['1'], ['2'], ['3'], ['acdel'], ['4'], ['5'], ['6'], ['+', '+', 'fn'], ['7'], ['8'], ['9'], ['-', '−', 'fn'], ['again', E.editId ? '取消' : '再记', 'fn'], ['0'], ['.'], ['ok', '完成', 'ok']];
@@ -134,7 +134,8 @@ function renderSubRow() {
   const top = topOf(E.catId), subs = top ? subsOf(top.id) : [];
   el.style.display = top && top.id ? '' : 'none';
   if (!top || !top.id) return;
-  el.innerHTML = `<small>${esc(top.name)} ›</small>` + subs.map(s => `<i class="chip ${s.id === E.catId ? 'on' : ''}" data-lp="cat" data-lpid="${s.id}" data-lpg="${E.type}|${top.id}" onclick="pickCat('${s.id === E.catId ? top.id : s.id}')">${s.icon} ${esc(s.name)}</i>`).join('')
+  const cnt = catCounts();
+  el.innerHTML = `<small>${esc(top.name)} ›</small>` + subs.map(s => cgChip(s, { on: s.id === E.catId, n: cnt.get(s.id) || 0, tap: `pickCat('${s.id === E.catId ? top.id : s.id}')`, lp: 'cat', type: E.type })).join('')
     + `<i class="chip" onclick="CT=E.type;editCat('','${top.id}')">＋ 二级分类</i>`;
 }
 function updCat() {
@@ -250,7 +251,8 @@ function pickAcc(field) { accSheet('选择账户', E[field], id => { E[field] = 
 function swapAcc() { [E.accountId, E.toAccountId] = [E.toAccountId, E.accountId]; render(); }
 function pickTag(f) {
   const T = TAGS[f], cur = E[f] || T.def, opts = (T.def ? [] : ['']).concat(S[T.list]);
-  openSheet('选择' + T.name, tagRows(f, opts, m => m === cur, `E['${f}']=this.dataset.v;closeSheet();render()`, '不设置' + T.name)
+  _pickReopen = () => pickTag(f);
+  openSheet('选择' + T.name, tagRows(f, opts, m => m === cur, `E['${f}']=this.dataset.v;closeSheet();render()`, '不设置' + T.name, true)
     + `<label>添加${T.name}</label><div class="btn-row"><input id="mIn" class="field" placeholder="${T.name}名称" maxlength="12"><button class="btn add-btn" onclick="addTag('${f}')">添加</button></div>`);
 }
 function addTag(f) {

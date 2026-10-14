@@ -79,10 +79,11 @@ function mergeCat(type, fromId, toId) {
   if (map.has(st.ocrCat)) st.ocrCat = map.get(st.ocrCat);
   return affected;
 }
-function catMergeSheet() {
+function catMergeSheet(again) {
   const from = catById(CE.id), own = new Set(subsOf(from.id).map(s => s.id));
-  // 目标列表和其他地方选分类是同一套卡片（catCardsHtml）
-  openSheet(`把「${esc(from.name)}」合并到`, catCardsHtml(CT, { sel: [], fn: 'catMergePick', noLp: true }) + `<div class="tip">「${esc(from.name)}」${own.size ? '和它的二级分类' : ''}下的所有记录都会改到选中的分类，然后删除「${esc(from.name)}」。${!from.pid && own.size ? '合并到一级分类时，同名的二级分类会合并，其余二级分类一起搬过去。' : ''}</div>`);
+  if (!again) CGS.merge = { type: CT, mode: 'single', noLp: true, open: from.pid || '', sel: [], pick: catMergePick, rerender: () => catMergeSheet(true) };
+  // 目标列表和其他地方选分类是同一套分类网格（catGridHtml）
+  openSheet(`把「${esc(from.name)}」合并到`, `<div class="cg-box">${catGridHtml('merge')}</div><div class="tip">「${esc(from.name)}」${own.size ? '和它的二级分类' : ''}下的所有记录都会改到选中的分类，然后删除「${esc(from.name)}」。${!from.pid && own.size ? '合并到一级分类时，同名的二级分类会合并，其余二级分类一起搬过去。' : ''}</div>`);
 }
 function catMergePick(id) {
   if (id === CE.id) return toast('不能合并到它自己');
@@ -133,11 +134,12 @@ function accMergeAsk(toId) {
   const from = accById(AE.id), to = accById(toId), bal = balances();
   const n = S.txns.filter(t => t.accountId === from.id || t.toAccountId === from.id).length;
   askConfirm(`把「${esc(from.name)}」合并到「${esc(to.name)}」？<br><small style="color:var(--t2)">${n} 条记录改到「${esc(to.name)}」，合并后余额 ${money(r2((bal[to.id] || 0) + (bal[from.id] || 0)))}。</small>`, () => {
+    const ret = _accReturn; _accReturn = null; // 从选择面板来的：合并完点「好的」回到面板
     mergeRun(`账户「${from.name}」合并到「${to.name}」`, () => {
       const { n: k, gone } = mergeAcc(from.id, to.id);
       if (stack[stack.length - 1].name === 'account') stack[stack.length - 1].p = to.id;
       return `「${esc(from.name)}」已合并到「${esc(to.name)}」，改了 <b>${k}</b> 条记录${gone ? `，抵消 ${gone} 笔互转` : ''}。`;
-    });
+    }, ret);
   }, '合并');
 }
 

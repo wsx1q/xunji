@@ -57,29 +57,37 @@ function toggleBd(field, v, again) {
   if (chip && ok) { chip.classList.toggle('on', i < 0); ok.textContent = '确定' + (a.length ? '（' + a.length + '）' : ''); return; }
   again();
 }
-/** 分类筛选面板：和分类管理页同一套卡片（catCardsHtml），点一下选中，长按编辑 */
+/** 分类筛选面板：和记一笔、分类管理同一套分类网格（catGridHtml），短按选择，长按编辑 */
 function pickBdCats() {
   const types = BD.type === 'income' ? ['income'] : BD.type === 'expense' ? ['expense'] : ['expense', 'income'];
   _catPickReopen = () => BD && pickBdCats();
-  multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">选一级分类即包含其下全部二级分类；数字是记录笔数；长按分类可以改名、删除、合并</div>`
-    + types.map(tp => `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` + catCardsHtml(tp, { sel: BD.cats, fn: 'pickBdCat', multi: true })).join(''));
+  for (const tp of types) {
+    const st = CGS['multi-' + tp] || (CGS['multi-' + tp] = { type: tp, mode: 'multi', open: '' });
+    Object.assign(st, { sel: BD.cats, toggle: pickBdCat, rerender: pickBdCats });
+  }
+  multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">点一级分类展开，选「全部」即包含其下所有二级分类；数字是记录笔数；长按分类可以改名、删除、合并</div>`
+    + types.map(tp => `${types.length > 1 ? `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` : ''}<div class="cg-box">${catGridHtml('multi-' + tp)}</div>`).join(''));
 }
 function pickBdCat(id) {
   const c = catById(id);
-  if (c.pid && BD.cats.includes(c.pid)) return toast(`已包含在「${catById(c.pid).name}」里，先取消「${catById(c.pid).name}」才能单独选`);
-  // 选中一级分类时去掉已单独选的二级分类（已经包含在内）
+  if (c.pid && BD.cats.includes(c.pid)) return toast(`已包含在「全部${catById(c.pid).name}」里，先取消它才能单独选`);
+  // 选中整个一级分类时去掉已单独选的二级分类（已经包含在内）
   if (!c.pid && !BD.cats.includes(id)) BD.cats = BD.cats.filter(x => catById(x).pid !== id);
-  toggleBd('cats', id, pickBdCats);
+  const i = BD.cats.indexOf(id);
+  i >= 0 ? BD.cats.splice(i, 1) : BD.cats.push(id);
+  pickBdCats();
 }
 /** 账户多选：和记账时选账户同一个列表（accRows），选中的打 ✓ */
 function pickBdAccs() {
-  multiSheet('账户（可多选）', 'accs', accRows(id => BD.accs.includes(id), id => `toggleBd('accs','${id}',pickBdAccs)`));
+  _pickReopen = pickBdAccs;
+  multiSheet('账户（可多选）', 'accs', accRows(id => BD.accs.includes(id), id => `toggleBd('accs','${id}',pickBdAccs)`, '', true));
 }
 /** 成员 / 商家 / 项目多选：和记账时选的同一个列表（tagRows） */
 function pickBdTags(f) {
   const T = TAGS[f], sel = BD[T.list], opts = (T.def ? [] : ['']).concat(S[T.list]);
   sel.filter(v => !opts.includes(v)).forEach(v => opts.push(v));
-  multiSheet(`${T.name}（可多选）`, T.list, tagRows(f, opts, m => sel.includes(m), `toggleBd('${T.list}',this.dataset.v,()=>pickBdTags('${f}'))`, '无' + T.name));
+  _pickReopen = () => pickBdTags(f);
+  multiSheet(`${T.name}（可多选）`, T.list, tagRows(f, opts, m => sel.includes(m), `toggleBd('${T.list}',this.dataset.v,()=>pickBdTags('${f}'))`, '无' + T.name, true));
 }
 function resetBd() { BD = normBoard({ id: BD.id, name: BD.name, goal: BD.goal }); render(); toast('已重置筛选条件'); }
 function saveBoard() {

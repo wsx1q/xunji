@@ -29,7 +29,7 @@ function mergeRun(label, fn, after) {
 function mergeDone(msg) {
   _sheetCb = _mergeUndo.after;
   openSheet('合并完成', `<div class="confirm-msg">${msg}</div>
-    <div class="btn-row"><button class="btn ghost" style="color:#555" onclick="undoMerge()">撤销合并</button><button class="btn" onclick="const f=_sheetCb;closeSheet();f&&f()">好的</button></div>
+    <div class="btn-row"><button class="btn ghost" onclick="undoMerge()">撤销合并</button><button class="btn" onclick="const f=_sheetCb;closeSheet();f&&f()">好的</button></div>
     <div class="ver">也可以稍后在「我的 → 撤销上一次合并」撤销；合并后再改动数据就不能撤销了</div>`);
 }
 function undoMerge() {
@@ -81,11 +81,12 @@ function mergeCat(type, fromId, toId) {
 }
 function catMergeSheet() {
   const from = catById(CE.id), own = new Set(subsOf(from.id).map(s => s.id));
-  const chip = c => `<i class="chip" onclick="catMergeAsk('${c.id}')">${c.icon} ${esc(c.name)}</i>`;
-  openSheet(`把「${esc(from.name)}」合并到`, tops(CT).filter(t => t.id !== from.id || own.size).map(t => {
-    const subs = subsOf(t.id).filter(s => s.id !== from.id);
-    return `<div class="ms-g">${t.id === from.id ? '' : chip(t)}${subs.map(chip).join('')}</div>`;
-  }).join('') + `<div class="tip">「${esc(from.name)}」${own.size ? '和它的二级分类' : ''}下的所有记录都会改到选中的分类，然后删除「${esc(from.name)}」。${!from.pid && own.size ? '合并到一级分类时，同名的二级分类会合并，其余二级分类一起搬过去。' : ''}</div>`);
+  // 目标列表和其他地方选分类是同一套卡片（catCardsHtml）
+  openSheet(`把「${esc(from.name)}」合并到`, catCardsHtml(CT, { sel: [], fn: 'catMergePick', noLp: true }) + `<div class="tip">「${esc(from.name)}」${own.size ? '和它的二级分类' : ''}下的所有记录都会改到选中的分类，然后删除「${esc(from.name)}」。${!from.pid && own.size ? '合并到一级分类时，同名的二级分类会合并，其余二级分类一起搬过去。' : ''}</div>`);
+}
+function catMergePick(id) {
+  if (id === CE.id) return toast('不能合并到它自己');
+  catMergeAsk(id);
 }
 function catMergeAsk(toId) {
   const from = catById(CE.id), to = catById(toId), ids = new Set([from.id, ...subsOf(from.id).map(s => s.id)]);
@@ -124,9 +125,8 @@ function mergeAcc(fromId, toId) {
 }
 function accMergeSheet() {
   keepAccForm();
-  const bal = balances(), from = accById(AE.id);
-  const opt = (a, sub) => `<div class="opt ${sub ? 'sub' : ''}" onclick="accMergeAsk('${a.id}')"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}</span><em>${money(bal[a.id])}</em></div>`;
-  openSheet(`把「${esc(from.name)}」合并到`, accTops().map(a => (a.id === from.id ? '' : opt(a)) + accKids(a.id).filter(k => k.id !== from.id).map(k => opt(k, true)).join('')).join('')
+  const from = accById(AE.id);
+  openSheet(`把「${esc(from.name)}」合并到`, accRows(() => false, id => `accMergeAsk('${id}')`, from.id)
     + `<div class="tip">「${esc(from.name)}」的所有记录都会改到选中的账户，余额并过去，然后删除「${esc(from.name)}」。两者之间的转账会抵消掉。</div>`);
 }
 function accMergeAsk(toId) {

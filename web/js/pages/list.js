@@ -20,7 +20,13 @@ function qHistShow(on) {
   if (!on || !list.length || (q && q.value.trim()) || document.activeElement !== q) { box.innerHTML = ''; return; }
   // 按下时 preventDefault，搜索框不会先失去焦点把列表收起来
   box.innerHTML = `<div class="qh-hd"><span>最近搜索</span><a onpointerdown="event.preventDefault()" onclick="S.settings.searchHist=[];save();qHistShow(false)">清除</a></div>
-    <div class="qh-list">${list.map(v => `<i class="chip" data-v="${esc(v)}" onpointerdown="event.preventDefault()" onclick="qHistUse(this.dataset.v)">${esc(v)}</i>`).join('')}</div>`;
+    <div class="qh-list">${list.map(v => `<i class="chip" data-v="${esc(v)}" onpointerdown="event.preventDefault()" onclick="qHistUse(this.dataset.v)"><span>${esc(v)}</span><b class="qh-x" onclick="event.stopPropagation();qHistDel(this.parentNode.dataset.v)">✕</b></i>`).join('')}</div>`;
+}
+/** 删掉一个历史关键词（右上角 ✕），列表留着继续选 */
+function qHistDel(v) {
+  S.settings.searchHist = qHist().filter(x => x !== v);
+  save();
+  qHistShow(true);
 }
 function qHistUse(v) {
   const q = $('#q'); if (q) { q.value = v; q.blur(); }
@@ -53,7 +59,7 @@ function pickLfAmount() {
     <div class="btn-row"><input id="lfMin" class="field" type="number" inputmode="decimal" placeholder="最低（不限）" value="${L.F.min}">
     <input id="lfMax" class="field" type="number" inputmode="decimal" placeholder="最高（不限）" value="${L.F.max}"></div>
     <div class="tip" style="margin-top:0">可以填负数，比如最高填 -0.01 就是只看负数金额的记录</div>
-    <div class="btn-row"><button class="btn ghost" style="color:#555" onclick="L.F.min=L.F.max='';closeSheet();render()">不限</button>
+    <div class="btn-row"><button class="btn ghost" onclick="L.F.min=L.F.max='';closeSheet();render()">不限</button>
     <button class="btn" onclick="lfAmountOk()">确定</button></div>`);
   setTimeout(() => $('#lfMin') && $('#lfMin').focus(), 150);
 }
@@ -66,7 +72,7 @@ function lfAmountOk() {
 }
 function pickLfNote() {
   openSheet('备注包含', `<input id="lfNote" class="field" placeholder="备注关键词" maxlength="20" value="${esc(L.F.note)}" onkeydown="if(event.key==='Enter')lfNoteOk()">
-    <div class="btn-row"><button class="btn ghost" style="color:#555" onclick="L.F.note='';closeSheet();render()">不限</button><button class="btn" onclick="lfNoteOk()">确定</button></div>`);
+    <div class="btn-row"><button class="btn ghost" onclick="L.F.note='';closeSheet();render()">不限</button><button class="btn" onclick="lfNoteOk()">确定</button></div>`);
   setTimeout(() => $('#lfNote') && $('#lfNote').focus(), 150);
 }
 function lfNoteOk() { L.F.note = $('#lfNote').value.trim(); closeSheet(); render(); }

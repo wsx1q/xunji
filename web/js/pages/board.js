@@ -45,14 +45,14 @@ function pickBdDate(field, title) {
 function multiSheet(title, field, items) {
   const y = $('.sh-bd') ? $('.sh-bd').scrollTop : 0;
   const sel = BD[field];
-  openSheet(title, items + `<div class="btn-row" style="margin-top:6px"><button class="btn ghost" style="color:#555" onclick="BD['${field}']=[];closeSheet();render()">全部（不限）</button><button class="btn" onclick="closeSheet();render()">确定${sel.length ? '（' + sel.length + '）' : ''}</button></div>`);
+  openSheet(title, items + `<div class="btn-row" style="margin-top:6px"><button class="btn ghost" onclick="BD['${field}']=[];closeSheet();render()">全部（不限）</button><button class="btn" onclick="closeSheet();render()">确定${sel.length ? '（' + sel.length + '）' : ''}</button></div>`);
   if (y) $('.sh-bd').scrollTop = y;
 }
 function toggleBd(field, v, again) {
   const a = BD[field], i = a.indexOf(v);
   i >= 0 ? a.splice(i, 1) : a.push(v);
   // 就地切换选中态和「确定（n）」，不重建弹窗内容
-  const chip = [...document.querySelectorAll('#sheet .chip[data-v]')].find(c => c.dataset.v === v);
+  const chip = [...document.querySelectorAll('#sheet [data-v]')].find(c => c.dataset.v === v); // 分类标签或账户 / 标签列表行
   const ok = [...document.querySelectorAll('#sheet .btn')].find(b => b.textContent.startsWith('确定'));
   if (chip && ok) { chip.classList.toggle('on', i < 0); ok.textContent = '确定' + (a.length ? '（' + a.length + '）' : ''); return; }
   again();
@@ -60,8 +60,9 @@ function toggleBd(field, v, again) {
 /** 分类筛选面板：和分类管理页同一套卡片（catCardsHtml），点一下选中，长按编辑 */
 function pickBdCats() {
   const types = BD.type === 'income' ? ['income'] : BD.type === 'expense' ? ['expense'] : ['expense', 'income'];
+  _catPickReopen = () => BD && pickBdCats();
   multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">选一级分类即包含其下全部二级分类；数字是记录笔数；长按分类可以改名、删除、合并</div>`
-    + types.map(tp => `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` + catCardsHtml(tp, { sel: BD.cats, fn: 'pickBdCat' })).join(''));
+    + types.map(tp => `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` + catCardsHtml(tp, { sel: BD.cats, fn: 'pickBdCat', multi: true })).join(''));
 }
 function pickBdCat(id) {
   const c = catById(id);
@@ -70,13 +71,15 @@ function pickBdCat(id) {
   if (!c.pid && !BD.cats.includes(id)) BD.cats = BD.cats.filter(x => catById(x).pid !== id);
   toggleBd('cats', id, pickBdCats);
 }
+/** 账户多选：和记账时选账户同一个列表（accRows），选中的打 ✓ */
 function pickBdAccs() {
-  multiSheet('账户（可多选）', 'accs', `<div class="chips" style="flex-wrap:wrap;padding:6px 0">${S.accounts.map(a => `<i class="chip ${BD.accs.includes(a.id) ? 'on' : ''}" data-v="${a.id}" onclick="toggleBd('accs',this.dataset.v,pickBdAccs)">${accIcon(a)} ${esc(a.name)}</i>`).join('')}</div>`);
+  multiSheet('账户（可多选）', 'accs', accRows(id => BD.accs.includes(id), id => `toggleBd('accs','${id}',pickBdAccs)`));
 }
+/** 成员 / 商家 / 项目多选：和记账时选的同一个列表（tagRows） */
 function pickBdTags(f) {
   const T = TAGS[f], sel = BD[T.list], opts = (T.def ? [] : ['']).concat(S[T.list]);
   sel.filter(v => !opts.includes(v)).forEach(v => opts.push(v));
-  multiSheet(`${T.name}（可多选）`, T.list, `<div class="chips" style="flex-wrap:wrap;padding:6px 0">${opts.map(m => `<i class="chip ${sel.includes(m) ? 'on' : ''}" data-v="${esc(m)}" onclick="toggleBd('${T.list}',this.dataset.v,()=>pickBdTags('${f}'))">${m ? T.icon + ' ' + esc(m) : '∅ 无' + T.name}</i>`).join('')}</div>`);
+  multiSheet(`${T.name}（可多选）`, T.list, tagRows(f, opts, m => sel.includes(m), `toggleBd('${T.list}',this.dataset.v,()=>pickBdTags('${f}'))`, '无' + T.name));
 }
 function resetBd() { BD = normBoard({ id: BD.id, name: BD.name, goal: BD.goal }); render(); toast('已重置筛选条件'); }
 function saveBoard() {
@@ -89,7 +92,7 @@ function saveBoard() {
   const list = S.settings.home.boards, i = list.findIndex(x => x.id === rec.id);
   if (i >= 0) list[i] = rec; else list.push(rec);
   const w = S.settings.home.widgets.find(x => x.id === 'periods'); if (w) w.on = true;
-  save(); BD = null; back(); toast('看板已保存');
+  save(); BD = null; back(); toast('已保存');
 }
 function delBoard() {
   askConfirm(`删除看板「${esc(BD.name)}」？`, () => {

@@ -83,7 +83,7 @@ function renderAccSheet() {
       <label>调整原因（改了余额时记在「余额变更」里）</label><input id="aWhy" class="field" value="${esc(AE._why || '')}" placeholder="选填，如：现金盘点、漏记、利息" maxlength="60">
       <div class="tip">修改余额并保存后，会自动在流水中增加一条「余额变更」记录，使账目与余额一致。不计入收支报表。</div>`
     : `<label>初始余额${AE.type === 'credit' ? '（信用卡欠款请填负数）' : ''}</label><input id="aInit" class="field" type="number" inputmode="decimal" value="${AE.init}" step="0.01">`}
-    <div class="btn-row">${AE.id ? `<button class="btn ghost" onclick="delAcc()">删除</button>${S.accounts.length > 1 ? '<button class="btn ghost" onclick="accMergeSheet()">合并到…</button>' : ''}` : ''}<button class="btn" onclick="saveAcc()">保存</button></div>`);
+    <div class="btn-row">${AE.id ? `<button class="btn ghost del" onclick="delAcc()">删除</button>${S.accounts.length > 1 ? '<button class="btn ghost" onclick="accMergeSheet()">合并到…</button>' : ''}` : ''}<button class="btn" onclick="saveAcc()">保存</button></div>`);
 }
 function saveAcc() {
   const name = $('#aName').value.trim(); if (!name) return toast('请输入账户名称');

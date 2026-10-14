@@ -53,7 +53,10 @@ i{font-style:normal}
 .chips::-webkit-scrollbar{display:none}
 .ci{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
 .btn{display:block;width:100%;height:46px;border-radius:23px;background:var(--grad);color:#fff;font-size:16px;font-weight:600;cursor:pointer;margin-top:14px}
-.btn.ghost{background:#F2F3F5;color:#E5484D}
+.btn.ghost{background:#F2F3F5;color:#555}
+/* 删除类：灰底红字；二次确认里的删除 / 清空：红底 */
+.btn.ghost.del{background:#F2F3F5;color:#E5484D}
+.btn.del{background:#E5484D}
 .btn-row{display:flex;gap:10px}
 .btn-row .btn{flex:1}
 
@@ -116,8 +119,6 @@ i{font-style:normal}
 .be-btns .btn{margin:0}
 .be-btns .btn:first-child{flex:2}
 .be-btns .btn.ghost{flex:1;color:#555}
-.ms-g{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0;border-bottom:1px dashed var(--line)}
-.ms-g .chip:first-child{font-weight:600}
 
 /* ---------- custom board view ---------- */
 .bv-sub{font-size:12px;opacity:.85;margin-top:10px;line-height:1.5}
@@ -507,7 +508,12 @@ i{font-style:normal}
 .qh-hd{display:flex;justify-content:space-between;font-size:12px;color:var(--t2);padding-bottom:6px}
 .qh-hd a{color:var(--t2);cursor:pointer}
 .qh-list{display:flex;flex-wrap:wrap;gap:6px}
-.qh-list .chip{max-width:9em;overflow:hidden;text-overflow:ellipsis}
+.qh-list{padding-top:6px;gap:12px 14px}
+.qh-list .chip{overflow:visible}
+.qh-list .chip span{max-width:8em;overflow:hidden;text-overflow:ellipsis}
+/* 右上角的小 ✕：单独删除这个关键词（点的范围比看到的大一圈） */
+.qh-x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C9CDD4;color:#fff;font-size:9px;font-weight:400;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
+.qh-x::before{content:"";position:absolute;inset:-8px}
 /* 分类卡片（分类管理页、筛选面板共用）：记录笔数只显示数字 */
 .cat-top .cnt{font-style:normal;font-size:11.5px;color:var(--t2);background:#F2F3F5;border-radius:9px;padding:1px 7px;margin-left:-4px}
 .cat-subs .chip .cnt{font-style:normal;font-size:11px;color:var(--t3);margin-left:3px}
@@ -520,3 +526,10 @@ i{font-style:normal}
 .cat-card.pick .cat-top em{color:var(--c);font-weight:600}
 .cat-card.pick .cat-top em::after{content:''}
 .cat-card.pick.on .cat-top b{color:var(--c)}
+/* 记录笔数：分类、成员 / 商家 / 项目、账本处处同一个样子，只显示数字 */
+.opt .cnt,.bk-i .cnt,.cat-top .cnt{font-style:normal;font-size:11.5px;font-weight:400;color:var(--t2);background:#F2F3F5;border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.cat-top .cnt{margin-left:-4px}
+.bk-ed{font-style:normal}
+.bk-ed::after{content:" ›"}
+/* 名单弹窗里「添加」按钮 */
+.btn.add-btn{margin:0;width:90px;flex:none;height:44px}

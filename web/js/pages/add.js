@@ -9,7 +9,7 @@ function startAdd(id, preset = {}) {
       <div class="kv"><span>时间</span><b>${ymd(t.time)} ${hm(t.time)}</b></div>
       <label>备注（调整原因）</label><input id="adjNote" class="field" value="${esc(t.note && t.note !== '余额变更' ? t.note : '')}" placeholder="如：现金盘点、漏记、利息" maxlength="60" onkeydown="if(event.key==='Enter')adjNoteSave('${t.id}')">
       <div class="tip">由修改账户余额自动生成，不计入收支报表。</div>
-      <div class="btn-row"><button class="btn ghost" style="color:#E5484D" onclick="askConfirm('删除这条余额变更记录后，账户余额会相应回退，确定吗？',()=>{S.txns=S.txns.filter(x=>x.id!=='${t.id}');save();closeSheet();toast('已删除');render()},'删除')">删除记录</button>
+      <div class="btn-row"><button class="btn ghost del" onclick="askConfirm('删除这条余额变更记录后，账户余额会相应回退，确定吗？',()=>{S.txns=S.txns.filter(x=>x.id!=='${t.id}');save();closeSheet();toast('已删除');render()},'删除')">删除记录</button>
       <button class="btn" onclick="adjNoteSave('${t.id}')">保存备注</button></div>`);
     return;
   }
@@ -250,8 +250,8 @@ function pickAcc(field) { accSheet('选择账户', E[field], id => { E[field] = 
 function swapAcc() { [E.accountId, E.toAccountId] = [E.toAccountId, E.accountId]; render(); }
 function pickTag(f) {
   const T = TAGS[f], cur = E[f] || T.def, opts = (T.def ? [] : ['']).concat(S[T.list]);
-  openSheet('选择' + T.name, opts.map(m => `<div class="opt ${m === cur ? 'on' : ''}" onclick="E['${f}']=this.dataset.m;closeSheet();render()" data-m="${esc(m)}"><div class="ci">${m ? T.icon : '∅'}</div><span>${m ? esc(m) : '不设置' + T.name}</span></div>`).join('')
-    + `<label>添加${T.name}</label><div class="btn-row"><input id="mIn" class="field" placeholder="${T.name}名称" maxlength="12"><button class="btn" style="margin:0;width:90px;flex:none;height:44px" onclick="addTag('${f}')">添加</button></div>`);
+  openSheet('选择' + T.name, tagRows(f, opts, m => m === cur, `E['${f}']=this.dataset.v;closeSheet();render()`, '不设置' + T.name)
+    + `<label>添加${T.name}</label><div class="btn-row"><input id="mIn" class="field" placeholder="${T.name}名称" maxlength="12"><button class="btn add-btn" onclick="addTag('${f}')">添加</button></div>`);
 }
 function addTag(f) {
   const T = TAGS[f], v = $('#mIn').value.trim(); if (!v) return;

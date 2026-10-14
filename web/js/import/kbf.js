@@ -68,7 +68,7 @@ function kbfPreview() {
     <label>账户（${accs.length} 个，余额按随手记流水计算）</label>
     ${accs.map(a => `<div class="kv"><span>${ACC_TYPES[ssjAccType(a)].icon} ${esc(a.name)}<small style="color:var(--t2)"> · ${esc(a.group || '')}</small></span><b class="${(bal[a.id] || 0) < 0 ? 'over' : ''}">${money(bal[a.id] || 0)}</b></div>`).join('')}
     <div class="tip">分类、成员、商家、项目会按名称合并到洵记现有的名单里；账户会新建（与现有账户重名时名字后加「（随手记）」）。导入后可在流水里按需修改。</div>
-    ${fresh ? `<div class="btn-row"><button class="btn ghost" style="color:#555" onclick="kbfCommit(false)">导入到当前账本</button><button class="btn" onclick="kbfCommit(true)">导入到新账本「随手记」</button></div>`
+    ${fresh ? `<div class="btn-row"><button class="btn ghost" onclick="kbfCommit(false)">导入到当前账本</button><button class="btn" onclick="kbfCommit(true)">导入到新账本「随手记」</button></div>`
       : '<div class="tip"><b>这份备份已经全部导入过了。</b></div>'}`);
 }
 function kbfCommit(toNew) {

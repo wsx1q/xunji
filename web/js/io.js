@@ -22,11 +22,11 @@ function backupSheet() {
   } else {
     listHtml = `<div class="tip">浏览器调试模式：退出页签时会把当前数据备份到 localStorage（最多 5 份）。正式自动备份请在 App 中使用。</div>`;
   }
-  openSheet('备份与恢复', `<div class="btn-row"><button class="btn" onclick="exportBackup()">导出加密备份</button><button class="btn ghost" style="color:#555" onclick="closeSheet();$('#importFile').click()">从文件恢复</button></div>
+  openSheet('备份与恢复', `<div class="btn-row"><button class="btn" onclick="exportBackup()">导出加密备份</button><button class="btn ghost" onclick="closeSheet();$('#importFile').click()">从文件恢复</button></div>
     <div class="tip">加密备份保存到「Download/XunJi」，和数据库文件一样用 AES-256 加密，换机或重装后选「从文件恢复」并输入密码即可。也能恢复旧版的 JSON 备份。</div>
     <label>自动备份频率（存在 App 内，保留最近 5 份，卸载 App 会一起删除）</label><div class="chips" style="flex-wrap:wrap;margin-bottom:12px">${opts.map(([v, n]) => `<i class="chip ${days === v ? 'on' : ''}" onclick="S.settings.backupDays=${v};save();backupSheet()">${n}</i>`).join('')}</div>
     ${listHtml}
-    <button class="btn ghost" style="color:#555" onclick="doForceBackup()">立即自动备份一份</button>
+    <button class="btn ghost" onclick="doForceBackup()">立即自动备份一份</button>
     <div class="ver"><a onclick="exportJSON()">导出明文 JSON（不加密，仅用于迁移到其他软件）</a></div>`);
 }
 function doForceBackup() {

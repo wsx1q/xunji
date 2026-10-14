@@ -156,7 +156,7 @@ function dbSheet() {
     ${db.custom ? '' : '<div class="tip">默认位置在 App 的私有目录里，文件管理器看不到，卸载 App 会一起删除。想自己管理文件，可以在下面选一个存放目录。</div>'}` : ''}
     <div class="kv" onclick="pwdSheet()"><span>密码</span><b>${pwdLabel()} ›</b></div>
     <div class="tip">数据库文件始终是加密的。可以把它放到 Documents、SD 卡或网盘同步目录：换机、重装后在这里选择同一个目录，输入密码就能继续使用。</div>
-    <div class="btn-row">${db.custom ? `<button class="btn ghost" style="color:#555" onclick="useDefaultDir()">改回默认位置</button>` : ''}<button class="btn" onclick="pickDbDir()">${db.custom ? '更换目录' : '选择存放目录'}</button></div>`);
+    <div class="btn-row">${db.custom ? `<button class="btn ghost" onclick="useDefaultDir()">改回默认位置</button>` : ''}<button class="btn" onclick="pickDbDir()">${db.custom ? '更换目录' : '选择存放目录'}</button></div>`);
 }
 function pickDbDir() {
   if (!NATIVE) return toast('仅在 App 中可用');
@@ -173,7 +173,7 @@ window.onDbDirPicked = s => {
   openSheet('该目录已有数据库', `<div class="confirm-msg">「${esc(r.label)}」中已经有 xunji.db，要怎么处理？</div>
     <div class="opt" onclick="finishDir('open')"><div class="ci">📂</div><span>改用该目录中的数据<small class="opt-sub">例如换机后继续使用网盘里的账本；当前数据留在原位置</small></span></div>
     <div class="opt" onclick="askConfirm('将用当前数据覆盖该目录中的数据库文件，原文件内容会丢失，确定吗？',()=>finishDir('write'),'覆盖')"><div class="ci">📝</div><span>用当前数据覆盖它<small class="opt-sub">该目录中原有的数据会被替换</small></span></div>
-    <button class="btn ghost" style="color:#555" onclick="closeSheet()">取消</button>`);
+    <button class="btn ghost" onclick="closeSheet()">取消</button>`);
 };
 function finishDir(mode) {
   closeSheet();

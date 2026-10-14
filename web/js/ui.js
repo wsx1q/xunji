@@ -20,7 +20,9 @@ function openSheet(title, body) {
 function closeSheet() { $('#sheet').classList.remove('on'); $('#sheet').innerHTML = ''; }
 function askConfirm(msg, fn, okText = '确定') {
   _sheetCb = fn;
-  openSheet('提示', `<div class="confirm-msg">${msg}</div><div class="btn-row"><button class="btn ghost" style="color:#666" onclick="closeSheet()">取消</button><button class="btn" onclick="const f=_sheetCb;closeSheet();f&&f()">${okText}</button></div>`);
+  // 删除 / 清空这类不可恢复的操作，确认按钮统一用红色
+  const danger = ['删除', '清空'].includes(okText);
+  openSheet('提示', `<div class="confirm-msg">${msg}</div><div class="btn-row"><button class="btn ghost" onclick="closeSheet()">取消</button><button class="btn ${danger ? 'del' : ''}" onclick="const f=_sheetCb;closeSheet();f&&f()">${okText}</button></div>`);
 }
 /** 自带年 / 月 / 日，不用系统日历；现在 = 今天。val 为 YYYY-MM-DD */
 function dateSheet(title, val, cb, opt = {}) {
@@ -113,7 +115,7 @@ function renderDateSheet() {
   openSheet(DS.title, `<div class="cal-yw"><input class="cal-yin" inputmode="numeric" maxlength="4" placeholder="其他年份" oninput="dateYearInput(this)"><div class="cal-y" id="dsY">${years.map(y => `<i class="chip" data-y="${y}" onclick="datePickY(${y})">${y}</i>`).join('')}</div></div>
     <div class="cal-m" id="dsM">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => `<i class="chip" data-m="${m}" onclick="datePickM(${m})">${m}月</i>`).join('')}</div>
     <div class="cal" id="dsCal"></div>
-    <div class="btn-row" style="margin-top:14px">${DS.empty ? `<button class="btn ghost" style="color:#666" onclick="const f=DS.cb;closeSheet();f&&f('')">清空</button>` : ''}
+    <div class="btn-row" style="margin-top:14px">${DS.empty ? `<button class="btn ghost" onclick="const f=DS.cb;closeSheet();f&&f('')">清空</button>` : ''}
       <button class="btn ghost" onclick="dateNow()">现在</button>
       <button class="btn" id="dsOk" onclick="dateOk()"></button></div>`);
   dateRefresh();
@@ -155,24 +157,34 @@ function numberSheet(title, val, fn, allowNeg = false) {
 }
 /* 通用选择弹窗：点选后 cb(值) 再刷新页面 */
 function sheetPick(v) { const f = _sheetCb; closeSheet(); f && f(v); render(); }
+/* ---------- 选择列表：同一类东西在哪里选都长一样，单选点了就关，多选打 ✓ ----------
+   分类 → catCardsHtml（分类卡片）；账户 → accRows；成员 / 商家 / 项目 → tagRows */
+/** 账户列表：一级账户和缩进的子账户，右边是余额。isOn(id) 是否选中，click(id) 点击时执行的代码，skip 不列出的账户 */
+function accRows(isOn, click, skip = '') {
+  const bal = balances();
+  const opt = (a, sub) => (a.id === skip ? '' : `<div class="opt ${sub ? 'sub' : ''} ${isOn(a.id) ? 'on' : ''}" data-v="${a.id}" onclick="${click(a.id)}"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}</span><em>${money(bal[a.id])}</em></div>`);
+  return accTops().map(a => opt(a) + accKids(a.id).map(k => opt(k, true)).join('')).join('');
+}
+/** 成员 / 商家 / 项目列表。opts 要列出的名字（'' 表示没有设置，显示成 none），click 里用 this.dataset.v 取值 */
+function tagRows(f, opts, isOn, click, none) {
+  const T = TAGS[f];
+  return opts.map(m => `<div class="opt ${isOn(m) ? 'on' : ''}" data-v="${esc(m)}" onclick="${click}"><div class="ci">${m ? T.icon : '∅'}</div><span>${m ? esc(m) : none}</span></div>`).join('');
+}
 function accSheet(title, cur, cb) {
   _sheetCb = cb;
-  const bal = balances();
-  const opt = (a, sub) => `<div class="opt ${sub ? 'sub' : ''} ${a.id === cur ? 'on' : ''}" onclick="sheetPick('${a.id}')"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}</span><em>${money(bal[a.id])}</em></div>`;
-  openSheet(title, accTops().map(a => opt(a) + accKids(a.id).map(k => opt(k, true)).join('')).join('')
-    + `<button class="btn" onclick="closeSheet();editAcc()">＋ 新建账户</button>`);
+  openSheet(title, accRows(id => id === cur, id => `sheetPick('${id}')`) + `<button class="btn" onclick="closeSheet();editAcc()">＋ 新建账户</button>`);
 }
 function memberSheet(cur, cb) {
   _sheetCb = cb;
-  const list = S.members.length ? S.members : ['本人'];
-  openSheet('选择成员', list.map(m => `<div class="opt ${m === cur ? 'on' : ''}" data-m="${esc(m)}" onclick="sheetPick(this.dataset.m)"><div class="ci">👤</div><span>${esc(m)}</span></div>`).join(''));
+  openSheet('选择成员', tagRows('member', S.members.length ? S.members : ['本人'], m => m === cur, 'sheetPick(this.dataset.v)'));
 }
+/** 选一个分类（导入账单 / 识别订单的分类、分类预算）：最近使用 + 分类卡片，长按可编辑 */
 function catSheet(title, type, cur, cb) {
   _sheetCb = cb;
-  const chip = id => { const x = catById(id); return `<i class="chip ${id === cur ? 'on' : ''}" onclick="sheetPick('${id}')">${x.icon} ${esc(x.name)}</i>`; };
-  const rec = recentCats(type), row = ids => `<div class="chips" style="flex-wrap:wrap">${ids.map(chip).join('')}</div>`;
-  openSheet(title, (rec.length ? `<label>最近使用</label>${row(rec)}` : '')
-    + tops(type).map(t => { const subs = subsOf(t.id); return `<label>${t.icon} ${esc(t.name)}</label>${row(subs.length ? subs.map(s => s.id) : [t.id])}`; }).join(''));
+  _catPickReopen = () => catSheet(title, type, cur, cb);
+  const rec = recentCats(type);
+  openSheet(title, (rec.length ? `<label>最近使用</label><div class="chips" style="flex-wrap:wrap;padding-bottom:4px">${rec.map(id => { const x = catById(id); return `<i class="chip ${id === cur ? 'on' : ''}" onclick="sheetPick('${id}')">${x.icon} ${esc(catLabel(id))}</i>`; }).join('')}</div>` : '')
+    + catCardsHtml(type, { sel: cur ? [cur] : [], fn: 'sheetPick' }));
 }
 function ringSvg(pct, bg, fg, size = 92, sw = 8) {
   const r = (size - sw) / 2, C = 2 * Math.PI * r, len = Math.max(0, Math.min(1, pct)) * C;
@@ -246,7 +258,7 @@ function selBar() {
   document.querySelectorAll('.filters .chip.selc').forEach(c => { c.textContent = SEL ? '☑ 退出多选' : '☑ 多选'; });
   if (!SEL) { bar.innerHTML = ''; return; }
   const ids = L.ids || [], all = ids.length && SEL.size >= ids.length && ids.every(id => SEL.has(id));
-  bar.innerHTML = `<div class="sel-bar"><a onclick="selEnd()">取消</a><a onclick="selAll()">${all ? '全不选' : `全选 ${ids.length} 笔`}</a><span>已选 <b>${SEL.size}</b> 笔</span><button class="btn" style="background:#E5484D" onclick="selDelete()">删除</button></div>`;
+  bar.innerHTML = `<div class="sel-bar"><a onclick="selEnd()">取消</a><a onclick="selAll()">${all ? '全不选' : `全选 ${ids.length} 笔`}</a><span>已选 <b>${SEL.size}</b> 笔</span><button class="btn del" onclick="selDelete()">删除</button></div>`;
 }
 function selAll() {
   const ids = L.ids || [];

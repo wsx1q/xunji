@@ -31,7 +31,8 @@ function barChart(series, labels, everyN = 1) {
   });
   return `<svg class="chart" viewBox="0 0 ${W} ${H}">${out}</svg>`;
 }
-function reportList(cat, exact = false) { Object.assign(L, L0, { kind: R.kind, ref: R.ref, type: R.type, cat, exact }); showList(); }
+// 和 openList 一样清掉流水页筛选栏（L.F）：否则之前在搜索页设过的分类 / 金额 / 时间等条件会叠加上来，明细变成空的
+function reportList(cat, exact = false) { Object.assign(L, L0, { kind: R.kind, ref: R.ref, type: R.type, cat, exact, limit: LIST_PAGE, F: normBoard({}) }); showList(); }
 Pages.report = () => {
   const [s, e] = periodRange(R.kind, R.ref);
   const all = inRange(bookTx(), s, e);

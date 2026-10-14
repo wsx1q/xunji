@@ -490,8 +490,6 @@ i{font-style:normal}
 .help li{margin-bottom:4px}
 .help code{background:#F2F3F5;border-radius:4px;padding:1px 5px;font-size:12.5px}
 /* 分类管理：记录数 */
-.cat-subs .chip .cnt{font-style:normal;font-size:11.5px;color:var(--t2);margin-left:5px}
-.cat-subs .chip .cnt.zero{color:var(--t3)}
 .cat-n{font-size:12.5px;color:var(--t2);line-height:1.6;background:#F7F8FA;border-radius:10px;padding:8px 12px;margin-top:12px}
 .cat-n b{color:var(--t1)}
 /* 记账键盘：右上角一格分成 AC 和 ⌫ */
@@ -510,3 +508,15 @@ i{font-style:normal}
 .qh-hd a{color:var(--t2);cursor:pointer}
 .qh-list{display:flex;flex-wrap:wrap;gap:6px}
 .qh-list .chip{max-width:9em;overflow:hidden;text-overflow:ellipsis}
+/* 分类卡片（分类管理页、筛选面板共用）：记录笔数只显示数字 */
+.cat-top .cnt{font-style:normal;font-size:11.5px;color:var(--t2);background:#F2F3F5;border-radius:9px;padding:1px 7px;margin-left:-4px}
+.cat-subs .chip .cnt{font-style:normal;font-size:11px;color:var(--t3);margin-left:3px}
+.cat-subs .chip.on .cnt{color:var(--c);opacity:.7}
+.cat-card.pick{border-bottom:1px dashed var(--line)}
+.cat-card.pick:last-of-type{border-bottom:0}
+.cat-card.pick .cat-top{padding:11px 0 8px}
+.cat-card.pick .cat-top .ci{width:36px;height:36px;font-size:18px}
+.cat-card.pick .cat-subs{padding:0 0 12px 48px;gap:6px}
+.cat-card.pick .cat-top em{color:var(--c);font-weight:600}
+.cat-card.pick .cat-top em::after{content:''}
+.cat-card.pick.on .cat-top b{color:var(--c)}

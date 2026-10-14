@@ -91,7 +91,8 @@ function catMergeAsk(toId) {
   const from = catById(CE.id), to = catById(toId), ids = new Set([from.id, ...subsOf(from.id).map(s => s.id)]);
   const n = S.txns.filter(t => ids.has(t.catId)).length;
   askConfirm(`把「${esc(catLabel(from.id))}」合并到「${esc(catLabel(to.id))}」？<br><small style="color:var(--t2)">${n} 条记录会改到「${esc(to.name)}」，「${esc(from.name)}」将被删除。</small>`, () => {
-    mergeRun(`分类「${from.name}」合并到「${to.name}」`, () => `「${esc(from.name)}」已合并到「${esc(to.name)}」，改了 <b>${mergeCat(CT, from.id, to.id)}</b> 条记录。`);
+    const ret = _catReturn; _catReturn = null; // 从筛选面板来的：合并完点「好的」回到面板
+    mergeRun(`分类「${from.name}」合并到「${to.name}」`, () => `「${esc(from.name)}」已合并到「${esc(to.name)}」，改了 <b>${mergeCat(CT, from.id, to.id)}</b> 条记录。`, ret);
   }, '合并');
 }
 

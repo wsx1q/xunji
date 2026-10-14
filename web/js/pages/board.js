@@ -57,11 +57,18 @@ function toggleBd(field, v, again) {
   if (chip && ok) { chip.classList.toggle('on', i < 0); ok.textContent = '确定' + (a.length ? '（' + a.length + '）' : ''); return; }
   again();
 }
+/** 分类筛选面板：和分类管理页同一套卡片（catCardsHtml），点一下选中，长按编辑 */
 function pickBdCats() {
   const types = BD.type === 'income' ? ['income'] : BD.type === 'expense' ? ['expense'] : ['expense', 'income'];
-  const chip = (c, label) => `<i class="chip ${BD.cats.includes(c.id) ? 'on' : ''}" data-v="${c.id}" onclick="toggleBd('cats',this.dataset.v,pickBdCats)">${c.icon} ${esc(label)}</i>`;
-  multiSheet('分类（可多选）', 'cats', types.map(tp => `<label>${tp === 'expense' ? '支出分类' : '收入分类'} · 选一级分类即包含其下全部二级分类</label>` + tops(tp).map(c =>
-    `<div class="ms-g">${chip(c, c.name)}${subsOf(c.id).map(s => chip(s, s.name)).join('')}</div>`).join('')).join(''));
+  multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">选一级分类即包含其下全部二级分类；数字是记录笔数；长按分类可以改名、删除、合并</div>`
+    + types.map(tp => `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` + catCardsHtml(tp, { sel: BD.cats, fn: 'pickBdCat' })).join(''));
+}
+function pickBdCat(id) {
+  const c = catById(id);
+  if (c.pid && BD.cats.includes(c.pid)) return toast(`已包含在「${catById(c.pid).name}」里，先取消「${catById(c.pid).name}」才能单独选`);
+  // 选中一级分类时去掉已单独选的二级分类（已经包含在内）
+  if (!c.pid && !BD.cats.includes(id)) BD.cats = BD.cats.filter(x => catById(x).pid !== id);
+  toggleBd('cats', id, pickBdCats);
 }
 function pickBdAccs() {
   multiSheet('账户（可多选）', 'accs', `<div class="chips" style="flex-wrap:wrap;padding:6px 0">${S.accounts.map(a => `<i class="chip ${BD.accs.includes(a.id) ? 'on' : ''}" data-v="${a.id}" onclick="toggleBd('accs',this.dataset.v,pickBdAccs)">${accIcon(a)} ${esc(a.name)}</i>`).join('')}</div>`);

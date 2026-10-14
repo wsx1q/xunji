@@ -33,18 +33,34 @@ let CT = 'expense', CE = null;
 /** 分类下的记录数（所有账本）；一级分类算上它的二级分类 */
 const catCounts = () => countBy(t => t.catId);
 const catTotal = (cnt, id) => (cnt.get(id) || 0) + subsOf(id).reduce((a, s) => a + (cnt.get(s.id) || 0), 0);
+/**
+ * 分类卡片：分类管理页和筛选面板共用同一套样子和操作。
+ * 一级分类是一行标题（大图标、粗体名字），二级分类是下面的小标签；有记录的分类后面显示笔数（只显示数字）。
+ * 长按任何一个分类都弹出编辑（改名、图标、删除、合并），长按后拖动排序。
+ * pick：筛选面板模式 { sel: 已选 id, fn: 点击时调用的函数名 }，点一下选中 / 取消，长按编辑完回到面板。
+ */
+function catCardsHtml(type, pick) {
+  const cnt = catCounts(), lp = pick ? 'catpick' : 'cat';
+  const num = n => (n ? `<i class="cnt">${n}</i>` : '');
+  return tops(type).map(c => {
+    const subs = subsOf(c.id), on = !!pick && pick.sel.includes(c.id);
+    const tap = id => (pick ? `${pick.fn}('${id}')` : `editCat('${id}')`);
+    return `<div class="cat-card ${pick ? 'pick' : 'card'} ${on ? 'on' : ''}" data-lp="${lp}" data-lpid="${c.id}" data-lpg="${type}|">
+      <div class="cat-top" onclick="${tap(c.id)}"><div class="ci" style="background:${c.color}26">${c.icon}</div><b>${esc(c.name)}</b>${num(catTotal(cnt, c.id))}<small>${subs.length ? subs.length + ' 个二级分类' : ''}</small><em>${pick ? (on ? '✓ 已选' : '') : '编辑'}</em></div>
+      <div class="cat-subs">${subs.map(s => `<i class="chip ${on || (pick && pick.sel.includes(s.id)) ? 'on' : ''}" data-v="${s.id}" data-lp="${lp}" data-lpid="${s.id}" data-lpg="${type}|${c.id}" onclick="${tap(s.id)}">${s.icon} ${esc(s.name)}${num(cnt.get(s.id) || 0)}</i>`).join('')}${pick ? '' : `<i class="chip sub-add" onclick="editCat('','${c.id}')">＋ 二级分类</i>`}</div></div>`;
+  }).join('');
+}
 Pages.cats = () => {
-  const cnt = catCounts();
   return hdr('分类管理', `<a onclick="editCat()">＋ 一级</a>`) + `<div style="text-align:center;padding:14px 0 0"><div class="seg light">${[['expense', '支出分类'], ['income', '收入分类']].map(([k, n]) => `<i class="${CT === k ? 'on' : ''}" onclick="CT='${k}';render()">${n}</i>`).join('')}</div></div>
-  ${tops(CT).map(c => {
-    const subs = subsOf(c.id);
-    return `<div class="card cat-card" data-lp="cat" data-lpid="${c.id}" data-lpg="${CT}|"><div class="cat-top" onclick="editCat('${c.id}')"><div class="ci" style="background:${c.color}26">${c.icon}</div><b>${esc(c.name)}</b><small>${subs.length ? subs.length + ' 个二级分类 · ' : ''}${catTotal(cnt, c.id)} 笔</small><em>编辑</em></div>
-      <div class="cat-subs">${subs.map(s => { const n = cnt.get(s.id) || 0; return `<i class="chip" data-lp="cat" data-lpid="${s.id}" data-lpg="${CT}|${c.id}" onclick="editCat('${s.id}')">${s.icon} ${esc(s.name)}<em class="cnt ${n ? '' : 'zero'}">${n}</em></i>`; }).join('')}<i class="chip sub-add" onclick="editCat('','${c.id}')">＋ 二级分类</i></div></div>`;
-  }).join('')}
+  ${catCardsHtml(CT)}
   <div class="card"><div class="cat-top" onclick="editCat()"><div class="ci ci-set">＋</div><b>添加一级分类</b></div></div>
-  <div class="ver">点击一级分类或二级分类可修改名称、图标；记账时可以只选一级分类</div>`;
+  <div class="ver">分类后面的数字是记录笔数。点击或长按分类可以改名、换图标、删除、合并；长按后拖动调整顺序</div>`;
 };
-function editCat(id, pid = '') {
+/* 从筛选面板长按进来编辑：保存 / 删除 / 合并后回到筛选面板 */
+let _catReturn = null;
+function catBack() { const f = _catReturn; _catReturn = null; if (f) f(); }
+function editCat(id, pid = '', ret = null) {
+  _catReturn = ret;
   const c = id && S.categories[CT].find(x => x.id === id);
   const p = pid && catById(pid);
   CE = c ? { ...c, pid: c.pid || '' } : { id: '', pid, name: '', icon: p ? p.icon : EMOJIS[0], color: p ? p.color : COLORS[0] };
@@ -73,17 +89,17 @@ function saveCat() {
   if (CE.id) list[list.findIndex(x => x.id === CE.id)] = rec; else list.push(rec);
   if (!pid) list.forEach(x => { if (x.pid === rec.id) x.color = rec.color; });
   if (!CE.id && pid && E && stack[stack.length - 1].name === 'add') E.catId = rec.id;
-  save(); closeSheet(); render(); toast('已保存');
+  save(); closeSheet(); render(); toast('已保存'); catBack();
 }
 function delCat() {
   const list = S.categories[CT];
-  const drop = ids => { S.categories[CT] = S.categories[CT].filter(x => !ids.includes(x.id)); Object.values(S.budgets).forEach(b => ids.forEach(id => delete b.cats[id])); save(); closeSheet(); render(); toast('已删除'); };
+  const drop = ids => { S.categories[CT] = S.categories[CT].filter(x => !ids.includes(x.id)); Object.values(S.budgets).forEach(b => ids.forEach(id => delete b.cats[id])); save(); closeSheet(); render(); toast('已删除'); catBack(); };
   if (CE.pid) {
     const n = S.txns.filter(t => t.catId === CE.id).length, parent = catById(CE.pid);
     if (!n) return drop([CE.id]); // 没有记录：直接删
     return askConfirm(n ? `该二级分类下有 ${n} 条记录，删除后这些记录将归入「${esc(parent.name)}」，确定删除？<br><small style="color:var(--t2)">想归到别的分类，用「合并到…」</small>` : '确定删除该二级分类？', () => {
       S.txns = S.txns.map(t => t.catId === CE.id ? { ...t, catId: parent.id } : t);
-      S.categories[CT] = list.filter(x => x.id !== CE.id); save(); render(); toast('已删除');
+      S.categories[CT] = list.filter(x => x.id !== CE.id); save(); render(); toast('已删除'); catBack();
     }, '删除');
   }
   if (tops(CT).length <= 1) return toast('至少保留一个一级分类');
@@ -93,7 +109,7 @@ function delCat() {
   askConfirm(`${ns ? `将同时删除其下 ${ns} 个二级分类。` : ''}${n ? `共有 ${n} 条记录，删除后将显示为「未分类」（想保留分类，用「合并到…」）。` : ''}确定删除「${esc(CE.name)}」？`, () => {
     S.categories[CT] = list.filter(x => !ids.includes(x.id));
     Object.values(S.budgets).forEach(b => delete b.cats[CE.id]);
-    save(); render(); toast('已删除');
+    save(); render(); toast('已删除'); catBack();
   }, '删除');
 }
 

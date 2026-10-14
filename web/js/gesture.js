@@ -16,6 +16,12 @@ const LP_KINDS = {
     edit: (id, g) => { CT = g.split('|')[0]; editCat(id); },
     order: (ids, g) => reorderBy(S.categories[g.split('|')[0]], c => c.id, ids),
   },
+  // 筛选面板里的分类：编辑 / 排序完回到面板
+  catpick: {
+    edit: (id, g) => { CT = g.split('|')[0]; editCat(id, '', () => BD && pickBdCats()); },
+    order: (ids, g) => reorderBy(S.categories[g.split('|')[0]], c => c.id, ids),
+    after: () => BD && pickBdCats(),
+  },
   acc: { edit: id => editAcc(id), order: ids => reorderBy(S.accounts, a => a.id, ids), rerender: true },
   book: { edit: id => editBook(id), order: ids => reorderBy(S.books, b => b.id, ids) },
   tag: {

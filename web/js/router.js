@@ -52,7 +52,7 @@ function back() {
   if (top.name === 'report' && R.pcat) { R.pcat = ''; render(); return true; }
   if (top.name === 'ocr') releaseLocalOcr();
   if (stack.length > 1) { stack.pop(); render(); return true; }
-  if (stack[0].name !== 'home') { tab('home'); return true; }
+  // 已经在某个标签页（首页 / 搜索 / 报表 / 我的）的第一层：交给系统（App 退到后台），不跳回首页
   return false;
 }
 window.appBack = back;

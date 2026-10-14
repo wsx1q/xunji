@@ -165,7 +165,7 @@ let _pickReopen = null;
 function accRows(isOn, click, skip = '', lp = false) {
   const bal = balances();
   const lpAttr = (a, sub) => (lp ? `data-lp="accpick" data-lpid="${a.id}" data-lpg="${sub ? 'kid|' + a.pid : 'top'}"` : '');
-  const opt = (a, sub) => (a.id === skip ? '' : `<div class="opt ${sub ? 'sub' : ''} ${isOn(a.id) ? 'on' : ''}" data-v="${a.id}" ${lpAttr(a, sub)} onclick="${click(a.id)}"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}</span><em>${money(bal[a.id])}</em></div>`);
+  const opt = (a, sub) => (a.id === skip ? '' : `<div class="opt ${sub ? 'sub' : ''} ${isOn(a.id) ? 'on' : ''}" data-v="${a.id}" ${lpAttr(a, sub)} onclick="${click(a.id)}"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}</span><em>${money(sub ? bal[a.id] : accSum(a.id, bal))}</em></div>`); // 上级显示合计（含子账户）
   return accTops().map(a => opt(a) + accKids(a.id).map(k => opt(k, true)).join('')).join('');
 }
 /** 成员 / 商家 / 项目列表。opts 要列出的名字（'' 表示没有设置，显示成 none），click 里用 this.dataset.v 取值 */

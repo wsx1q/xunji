@@ -45,7 +45,7 @@ function cgChip(s, { on, n, tap, lp, type }) {
 /**
  * 网格状态 CGS[key] = { type, mode: 'manage' | 'single' | 'multi', open: 展开的一级分类, sel: 已选 id,
  *   pick(id): 单选选中, toggle(id): 多选切换, rerender(): 重画, noLp: 不能长按编辑 }
- * 选一级分类本身：单选时点下面一行的「只记到 X」，多选时点「全部 X」（包含其下所有二级分类）。
+ * 选一级分类本身：单选时点下面一行的「只记到 X」；多选时直接点一级分类图标（包含其下所有二级分类），再点二级分类就改成只选它。
  */
 const CGS = {};
 let _catPickReopen = null; // 面板里长按编辑完回到这个面板
@@ -60,7 +60,7 @@ function catGridHtml(key) {
   if (top) {
     const all = sel.includes(top.id);
     const whole = st.mode === 'single' ? `<i class="chip ${all ? 'on' : ''}" onclick="cgPick('${key}','${top.id}')">只记到「${esc(top.name)}」</i>`
-      : st.mode === 'multi' ? `<i class="chip ${all ? 'on' : ''}" onclick="cgPick('${key}','${top.id}')">全部「${esc(top.name)}」</i>` : '';
+      : '';
     sub = `<div class="cg-sub"><small>${top.icon} ${esc(top.name)} ›</small>${whole}${subsOf(top.id).map(s => cgChip(s, { on: sel.includes(s.id) || (st.mode === 'multi' && all),
       n: cnt.get(s.id) || 0, tap: `cgPick('${key}','${s.id}')`, lp, type: st.type })).join('')}${st.mode === 'manage' ? `<i class="chip sub-add" onclick="editCat('','${top.id}')">＋ 二级分类</i>` : ''}</div>`;
   }
@@ -70,6 +70,8 @@ function cgTop(key, id) {
   const st = CGS[key];
   // 单选时没有二级分类的一级分类，点一下就选中
   if (st.mode === 'single' && !subsOf(id).length) return st.pick(id);
+  // 多选：短按一级分类就是选中 / 取消整个分类（同时展开它的二级分类，可以再细选）
+  if (st.mode === 'multi') { st.open = id; return st.toggle(id); }
   st.open = id;
   st.rerender();
 }

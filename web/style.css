@@ -532,3 +532,5 @@ i{font-style:normal}
 .cg-card{padding:16px 10px 12px}
 .cg-box{padding:6px 0 4px}
 .cg-box .cgrid{gap:14px 0}
+/* 多选面板底部的「全部（不限）/ 确定」：内容很长时也固定在底部 */
+.btn-row.ms-ok{position:sticky;bottom:-18px;background:#fff;margin:6px -18px -18px;padding:2px 18px 14px;box-shadow:0 -6px 12px rgba(255,255,255,.95)}

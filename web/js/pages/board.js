@@ -45,7 +45,7 @@ function pickBdDate(field, title) {
 function multiSheet(title, field, items) {
   const y = $('.sh-bd') ? $('.sh-bd').scrollTop : 0;
   const sel = BD[field];
-  openSheet(title, items + `<div class="btn-row" style="margin-top:6px"><button class="btn ghost" onclick="BD['${field}']=[];closeSheet();render()">全部（不限）</button><button class="btn" onclick="closeSheet();render()">确定${sel.length ? '（' + sel.length + '）' : ''}</button></div>`);
+  openSheet(title, items + `<div class="btn-row ms-ok"><button class="btn ghost" onclick="BD['${field}']=[];closeSheet();render()">全部（不限）</button><button class="btn" onclick="closeSheet();render()">确定${sel.length ? '（' + sel.length + '）' : ''}</button></div>`);
   if (y) $('.sh-bd').scrollTop = y;
 }
 function toggleBd(field, v, again) {
@@ -65,12 +65,13 @@ function pickBdCats() {
     const st = CGS['multi-' + tp] || (CGS['multi-' + tp] = { type: tp, mode: 'multi', open: '' });
     Object.assign(st, { sel: BD.cats, toggle: pickBdCat, rerender: pickBdCats });
   }
-  multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">点一级分类展开，选「全部」即包含其下所有二级分类；数字是记录笔数；长按分类可以改名、删除、合并</div>`
+  multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">点一级分类就选中整个分类（含二级），再点二级分类可以只选它；数字是记录笔数；长按分类可以改名、删除、合并</div>`
     + types.map(tp => `${types.length > 1 ? `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` : ''}<div class="cg-box">${catGridHtml('multi-' + tp)}</div>`).join(''));
 }
 function pickBdCat(id) {
   const c = catById(id);
-  if (c.pid && BD.cats.includes(c.pid)) return toast(`已包含在「全部${catById(c.pid).name}」里，先取消它才能单独选`);
+  // 已选整个一级分类时点它的二级分类：改成只选这个二级分类
+  if (c.pid && BD.cats.includes(c.pid)) BD.cats = BD.cats.filter(x => x !== c.pid);
   // 选中整个一级分类时去掉已单独选的二级分类（已经包含在内）
   if (!c.pid && !BD.cats.includes(id)) BD.cats = BD.cats.filter(x => catById(x).pid !== id);
   const i = BD.cats.indexOf(id);

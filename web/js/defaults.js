@@ -95,9 +95,11 @@ const amountText = b => b.min === '' && +b.max === -0.01 ? '< 0 元' : +b.min ==
   : b.min !== '' && b.max !== '' ? `${b.min} - ${b.max} 元` : b.min !== '' ? `≥ ${b.min} 元` : b.max !== '' ? `≤ ${b.max} 元` : '';
 function boardMatch(b) {
   const min = b.min === '' ? -Infinity : +b.min, max = b.max === '' ? Infinity : +b.max;
+  // 选了上级账户就包含它的子账户（钱一般都记在子账户里，如 微信 → 零钱 / 零钱通）
+  const accs = new Set(b.accs.flatMap(id => [id, ...S.accounts.filter(a => a.pid === id).map(a => a.id)]));
   return t => (b.type === 'all' || t.type === b.type)
     && (!b.cats.length || (t.type !== 'transfer' && t.type !== 'adjust' && b.cats.some(id => inCat(t.catId, id))))
-    && (!b.accs.length || b.accs.includes(t.accountId) || b.accs.includes(t.toAccountId))
+    && (!accs.size || accs.has(t.accountId) || accs.has(t.toAccountId))
     && t.amount >= min && t.amount <= max
     && (!b.members.length || b.members.includes(t.member || '本人'))
     && (!b.merchants.length || b.merchants.includes(t.merchant || ''))

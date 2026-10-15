@@ -11,7 +11,7 @@ Pages.me = () => {
     ['🗂️', '分类管理', "go('cats')"], ['📚', '账本管理', "go('books')", esc(curBook().name)], ['👥', '成员管理', 'manageMembers()', S.members.length + ' 人'],
     ['🏪', '商家管理', "manageTags('merchant')", S.merchants.length + ' 个'], ['📁', '项目管理', "manageTags('project')", S.projects.length + ' 个'],
     ['🧩', '首页看板', "go('dash')", S.settings.home.widgets.filter(w => w.on).length + ' 个模块'],
-    canUndoMerge() && ['↩️', '撤销上一次合并', "askConfirm('撤销「' + esc(_mergeUndo.label) + '」，恢复到合并前的样子？',undoMerge,'撤销')", '']].filter(Boolean))}
+    canUndoMerge() && ['↩️', '撤销上一次合并 / 批量修改', "askConfirm('撤销「' + esc(_mergeUndo.label) + '」，恢复到之前的样子？',undoMerge,'撤销')", '']].filter(Boolean))}
   ${menu([['🔑', '密码', 'pwdSheet()', pwdLabel()], ['👆', '指纹解锁', 'toggleBio()', S.settings.bio && lockOn() ? '已开启' : '未开启'],
     ['🔐', '数据库位置', 'dbSheet()', db.custom ? esc(db.label) : 'App 内部存储']])}
   ${menu([['💾', '备份与恢复', 'backupSheet()', '自动 ' + backupDaysLabel()], ['📤', '导出 Excel (CSV)', 'exportCSV()'],

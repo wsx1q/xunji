@@ -12,6 +12,8 @@ const money = (n, dec = 2) => {
 };
 const r2 = n => Math.round(n * 100) / 100;
 const pad = n => String(n).padStart(2, '0');
+/** 搜索用：英文不分大小写（q 传进来前已经转成小写） */
+const hasText = (s, q) => String(s || '').toLowerCase().includes(q);
 const WEEK = '日一二三四五六';
 const sod = t => { const d = new Date(t); d.setHours(0, 0, 0, 0); return d.getTime(); };
 const ymd = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };

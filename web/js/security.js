@@ -149,11 +149,11 @@ function dbSheet() {
     <div class="kv"><span>文件名</span><b>${NATIVE ? esc(db.file) : '—'}</b></div>
     <div class="kv"><span>存储位置</span><b>${esc(db.label)}</b></div>
     ${NATIVE ? `<label>文件位置</label>
-    <div class="db-path"><small>当前数据库</small><code>${esc(db.path || '')}</code></div>
+    <div class="db-path"><small>当前数据库${db.custom ? '' : '（App 私有目录，系统保护，文件管理器看不到）'}</small><code>${esc(db.path || '')}</code></div>
     ${db.custom ? `<div class="db-path"><small>默认位置（改回默认时使用）</small><code>${esc(db.defaultPath || '')}</code></div>` : ''}
-    <div class="db-path"><small>自动备份（App 内，最多 5 份，卸载会删除）</small><code>${esc(db.backupPath || '')}</code></div>
-    <div class="db-path"><small>导出的加密备份 / CSV</small><code>${esc(db.exportPath || '')}</code></div>
-    ${db.custom ? '' : '<div class="tip">默认位置在 App 的私有目录里，文件管理器看不到，卸载 App 会一起删除。想自己管理文件，可以在下面选一个存放目录。</div>'}` : ''}
+    <div class="db-path"><small>自动备份（App 私有目录，文件管理器看不到；最多 5 份，卸载会删除）</small><code>${esc(db.backupPath || '')}</code></div>
+    <div class="db-path"><small>导出的加密备份 / CSV（文件管理器里能找到）</small><code>${esc(db.exportPath || '')}</code></div>
+    ${db.custom ? '' : '<div class="tip">上面两个 /data/user/0/… 路径是 Android 给每个 App 的私有目录：只有洵记自己能读写，文件管理器和电脑连接都看不到（防止别的 App 读你的账本），卸载 App 会一起删除。<br>想自己拿到数据库文件：用「备份与恢复 → 导出加密备份」存到下载 / XunJi，或者在下面选一个存放目录，把数据库搬到你能看到的文件夹。</div>'}` : ''}
     <div class="kv" onclick="pwdSheet()"><span>密码</span><b>${pwdLabel()} ›</b></div>
     <div class="tip">数据库文件始终是加密的。可以把它放到 Documents、SD 卡或网盘同步目录：换机、重装后在这里选择同一个目录，输入密码就能继续使用。</div>
     <div class="btn-row">${db.custom ? `<button class="btn ghost" onclick="useDefaultDir()">改回默认位置</button>` : ''}<button class="btn" onclick="pickDbDir()">${db.custom ? '更换目录' : '选择存放目录'}</button></div>`);

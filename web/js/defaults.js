@@ -75,7 +75,7 @@ const BOARDS = {
 };
 const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d).getTime(); };
 const cnDate = t => { const d = new Date(t); return `${d.getFullYear()}年${pad(d.getMonth() + 1)}月${pad(d.getDate())}日`; };
-const matchTx = (t, member, note) => (!member || (t.member || '本人') === member) && (!note || (t.note || '').includes(note));
+const matchTx = (t, member, note) => (!member || (t.member || '本人') === member) && (!note || hasText(t.note, note.toLowerCase()));
 const TX_TYPES = { all: '全部', expense: '支出', income: '收入', transfer: '转账', adjust: '余额变更' };
 const normBoard = b => ({
   id: b.id || '', custom: true, name: b.name || '', type: TX_TYPES[b.type] ? b.type : 'all', start: b.start || '', end: b.end || '',
@@ -96,6 +96,7 @@ const amountText = b => b.min === '' && +b.max === -0.01 ? '< 0 元' : +b.min ==
 function boardMatch(b) {
   const min = b.min === '' ? -Infinity : +b.min, max = b.max === '' ? Infinity : +b.max;
   // 选了上级账户就包含它的子账户（钱一般都记在子账户里，如 微信 → 零钱 / 零钱通）
+  const note = (b.note || '').toLowerCase(); // 备注关键词不分大小写
   const accs = new Set(b.accs.flatMap(id => [id, ...S.accounts.filter(a => a.pid === id).map(a => a.id)]));
   return t => (b.type === 'all' || t.type === b.type)
     && (!b.cats.length || (t.type !== 'transfer' && t.type !== 'adjust' && b.cats.some(id => inCat(t.catId, id))))
@@ -104,7 +105,7 @@ function boardMatch(b) {
     && (!b.members.length || b.members.includes(t.member || '本人'))
     && (!b.merchants.length || b.merchants.includes(t.merchant || ''))
     && (!b.projects.length || b.projects.includes(t.project || ''))
-    && (!b.note || (t.note || '').includes(b.note));
+    && (!note || hasText(t.note, note));
 }
 function boardOf(b) {
   if (b.custom) {

@@ -17,23 +17,24 @@ const mapIds = (arr, m) => uniq(arr.map(x => (m.has(x) ? m.get(x) : x)));
    免得把合并之后新记的账也一起撤掉。只在内存里，重启 App 后就没有了。 */
 let _mergeUndo = null;
 const canUndoMerge = () => !!_mergeUndo && _mergeUndo.ver === _dataVer && _mergeUndo.S === S;
-/** 执行一次合并：fn 做改动并返回提示文字；完成后弹出结果，可以马上撤销。after：关掉结果后回到哪里 */
-function mergeRun(label, fn, after) {
+/** 执行一次合并（或批量修改）：fn 做改动并返回提示文字；完成后弹出结果，可以马上撤销。after：关掉结果后回到哪里；kind：合并 / 修改 */
+function mergeRun(label, fn, after, kind = '合并') {
   const txns = S.txns, snap = JSON.parse(JSON.stringify({ ...S, txns: null })); // txns 占位，保持字段顺序
   const msg = fn();
   save();
-  _mergeUndo = { label, snap, txns, ver: _dataVer, S, after };
+  _mergeUndo = { label, snap, txns, ver: _dataVer, S, after, kind };
   render();
   mergeDone(msg);
 }
 function mergeDone(msg) {
-  _sheetCb = _mergeUndo.after;
-  openSheet('合并完成', `<div class="confirm-msg">${msg}</div>
-    <div class="btn-row"><button class="btn ghost" onclick="undoMerge()">撤销合并</button><button class="btn" onclick="const f=_sheetCb;closeSheet();f&&f()">好的</button></div>
-    <div class="ver">也可以稍后在「我的 → 撤销上一次合并」撤销；合并后再改动数据就不能撤销了</div>`);
+  const u = _mergeUndo, k = u.kind;
+  _sheetCb = u.after;
+  openSheet(`${k}完成`, `<div class="confirm-msg">${msg}</div>
+    <div class="btn-row"><button class="btn ghost" onclick="undoMerge()">撤销${k}</button><button class="btn" onclick="const f=_sheetCb;closeSheet();f&&f()">好的</button></div>
+    <div class="ver">也可以稍后在「我的 → 撤销上一次合并 / 批量修改」撤销；之后再改动数据就不能撤销了</div>`);
 }
 function undoMerge() {
-  if (!canUndoMerge()) { _mergeUndo = null; closeSheet(); render(); return toast('合并后数据又有改动，已经不能撤销了'); }
+  if (!canUndoMerge()) { _mergeUndo = null; closeSheet(); render(); return toast('之后数据又有改动，已经不能撤销了'); }
   const u = _mergeUndo;
   _mergeUndo = null;
   S = u.snap; S.txns = u.txns;
@@ -176,4 +177,73 @@ function mergeTag(f, old, nw) {
   for (const b of st.home.boards) if (b.custom && b[T.list]) b[T.list] = uniq(b[T.list].map(x => (x === old ? nw : x)));
   for (const o of Object.values(st.last || {})) if (o && o[f] === old) o[f] = nw;
   return n;
+}
+
+/* ---------------- 批量修改（流水页多选之后） ----------------
+   改分类 / 账户 / 成员 / 商家 / 项目，追加备注，删掉备注里的某段文字。和合并共用一套撤销（mergeRun）。
+   可以先用搜索、筛选把要整理的记录找出来，全选后一次改好。 */
+function bulkSheet() {
+  if (!SEL || !SEL.size) return toast('还没有选中记录');
+  const n = SEL.size;
+  const row = (ic, name, fn, sub = '') => `<div class="opt" onclick="${fn}"><div class="ci">${ic}</div><span>${name}${sub ? `<small class="opt-sub">${sub}</small>` : ''}</span><em>›</em></div>`;
+  openSheet(`批量修改 ${n} 笔`, row('🗂️', '改分类', 'bulkCat()', '转账、余额变更没有分类，会跳过')
+    + row('💳', '改账户', 'bulkAcc()') + row('👤', '改成员', "bulkTag('member')") + row('🏪', '改商家', "bulkTag('merchant')") + row('📁', '改项目', "bulkTag('project')")
+    + row('📝', '追加备注', 'bulkNoteAdd()', '加在原备注后面，原来的内容保留')
+    + row('✂️', '删掉备注里的文字', 'bulkNoteDel()', '只删掉指定的文字，备注其余内容保留')
+    + `<div class="btn-row"><button class="btn ghost del" onclick="closeSheet();selDelete()">删除这 ${n} 笔</button></div>
+    <div class="ver">改完可以马上撤销，或稍后在「我的 → 撤销上一次合并 / 批量修改」撤销</div>`);
+}
+/** fn(t) 返回要改的字段；返回 null 表示这笔不适用或本来就一样，跳过 */
+function bulkApply(label, fn) {
+  const set = new Set(SEL);
+  mergeRun(label, () => {
+    const n = remapTxns(t => (set.has(t.id) ? fn(t) : null));
+    selEnd();
+    return `${esc(label)}：改了 <b>${n}</b> 笔${n < set.size ? `，另外 ${set.size - n} 笔不适用或本来就是这样，没有改动` : ''}。`;
+  }, null, '修改');
+}
+const bulkTxns = () => S.txns.filter(t => SEL.has(t.id));
+function bulkCat() {
+  const types = new Set(bulkTxns().filter(t => t.type === 'expense' || t.type === 'income').map(t => t.type));
+  if (!types.size) return toast('选中的都是转账或余额变更，没有分类');
+  const pick = type => catSheet(`把${type === 'expense' ? '支出' : '收入'}改到哪个分类`, type, '', id =>
+    bulkApply(`改分类为「${catLabel(id)}」`, t => (t.type === type && t.catId !== id ? { catId: id } : null)));
+  if (types.size === 1) return pick([...types][0]);
+  _sheetCb = pick;
+  openSheet('选中的有支出也有收入', `<div class="tip" style="margin-top:0">支出和收入的分类是分开的，一次改一种：</div>
+    <div class="opt" onclick="_sheetCb('expense')"><div class="ci">💸</div><span>改其中支出记录的分类</span><em>›</em></div>
+    <div class="opt" onclick="_sheetCb('income')"><div class="ci">💰</div><span>改其中收入记录的分类</span><em>›</em></div>`);
+}
+function bulkAcc() {
+  // 转账改转出账户；改完和转入账户相同的会变成自己转给自己，跳过
+  accSheet('改到哪个账户', '', id => bulkApply(`改账户为「${accName(id)}」`, t => (t.accountId === id || (t.type === 'transfer' && t.toAccountId === id) ? null : { accountId: id })));
+}
+function bulkTag(f) {
+  const T = TAGS[f];
+  _sheetCb = v => bulkApply(v ? `改${T.name}为「${v}」` : `清空${T.name}`, t => ((t[f] || T.def) === (v || T.def) ? null : { [f]: v || T.def }));
+  openSheet(`改成哪个${T.name}`, tagRows(f, (T.def ? [] : ['']).concat(S[T.list]), () => false, 'sheetPick(this.dataset.v)', '不设置' + T.name));
+}
+function bulkNoteAdd() {
+  _sheetCb = () => {
+    const v = $('#bnIn').value.trim(); if (!v) return toast('请输入要追加的文字');
+    closeSheet();
+    bulkApply(`追加备注「${v}」`, t => ((t.note || '').includes(v) ? null : { note: t.note ? `${t.note} ${v}` : v }));
+  };
+  openSheet('追加备注', `<input id="bnIn" class="field" placeholder="要加的文字，如：#报销、已核对" maxlength="30" onkeydown="if(event.key==='Enter')_sheetCb()">
+    <div class="tip">加在每笔原备注的后面（中间空一格），原来的备注保留；已经含有这段文字的不会重复加。</div>
+    <button class="btn" onclick="_sheetCb()">追加到 ${SEL.size} 笔</button>`);
+  setTimeout(() => $('#bnIn') && $('#bnIn').focus(), 150);
+}
+function bulkNoteDel() {
+  _sheetCb = () => {
+    const v = $('#bnIn').value.trim(); if (!v) return toast('请输入要删掉的文字');
+    closeSheet();
+    // 英文不分大小写，和搜索一致；删完把多出来的空格合并
+    const re = new RegExp(v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), lv = v.toLowerCase();
+    bulkApply(`删掉备注里的「${v}」`, t => (hasText(t.note, lv) ? { note: t.note.replace(re, '').replace(/\s{2,}/g, ' ').trim() } : null));
+  };
+  openSheet('删掉备注里的文字', `<input id="bnIn" class="field" placeholder="要删掉的文字" maxlength="30" onkeydown="if(event.key==='Enter')_sheetCb()">
+    <div class="tip">只删掉每笔备注里的这段文字（英文不分大小写），备注其余内容保留。</div>
+    <button class="btn" onclick="_sheetCb()">从 ${SEL.size} 笔里删掉</button>`);
+  setTimeout(() => $('#bnIn') && $('#bnIn').focus(), 150);
 }

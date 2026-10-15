@@ -4,7 +4,7 @@ function manageMembers() { manageTags('member'); }
 const tagCount = (f, m) => S.txns.reduce((a, t) => a + ((t[f] || TAGS[f].def) === m ? 1 : 0), 0);
 function manageTags(f) {
   const T = TAGS[f], list = S[T.list];
-  const cnt = countBy(t => t[f] || T.def);
+  const cnt = tagCounts(f);
   openSheet(T.name + '管理', (list.map(m => { const n = cnt.get(m) || 0; return `<div class="opt" data-v="${esc(m)}" data-lp="tag" data-lpid="${esc(m)}" data-lpg="${f}" onclick="editTag('${f}',this.dataset.v)"><div class="ci">${T.icon}</div><span>${esc(m)}${n ? `<i class="cnt">${n}</i>` : ''}</span><em>${m === T.def ? '默认' : '编辑'}</em></div>`; }).join('') || empty('还没有' + T.name, T.icon))
     + `<label>添加${T.name}</label><div class="btn-row"><input id="mIn" class="field" placeholder="${T.name}名称" maxlength="12"><button class="btn add-btn" onclick="const v=$('#mIn').value.trim();if(v&&!S['${T.list}'].includes(v)){S['${T.list}'].push(v);save()}manageTags('${f}')">添加</button></div>
     <div class="tip">数字是记录笔数。点一下或长按可以改名、删除、合并；长按后拖动调整顺序。删除${T.name}不会删除记录，已有记录里的名称会保留。</div>`);

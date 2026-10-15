@@ -121,7 +121,8 @@ function matchListTx(t, s, e, q, fm) {
   if (L.type !== 'all' && t.type !== L.type) return false;
   if (!matchTx(t, L.member, L.note)) return false;
   if (L.cat && !(L.exact ? t.catId === L.cat : inCat(t.catId, L.cat))) return false;
-  if (q && !((t.note || '').includes(q) || catLabel(t.catId).includes(q) || accName(t.accountId).includes(q) || String(t.amount).includes(q) || (t.member || '').includes(q) || (t.merchant || '').includes(q) || (t.project || '').includes(q))) return false;
+  // q 已经转成小写：英文不分大小写
+  if (q && !(hasText(t.note, q) || hasText(catLabel(t.catId), q) || hasText(accName(t.accountId), q) || String(t.amount).includes(q) || hasText(t.member, q) || hasText(t.merchant, q) || hasText(t.project, q))) return false;
   return true;
 }
 function renderListBody(append) {
@@ -129,7 +130,7 @@ function renderListBody(append) {
   if (!$('#lbody')) return;
   ensureTxnOrder();
   const [s, e] = lfDates() ? boardRange(L.F) : L.kind === 'custom' ? [L.s, L.e] : periodRange(L.kind, L.ref);
-  const q = L.q.trim();
+  const q = L.q.trim().toLowerCase();
   // 筛选栏的条件（类型由上面的类型按钮管，这里不重复判断）
   const fm = lfActive().some(k => k !== 'time') ? boardMatch({ ...L.F, type: 'all' }) : null;
   const shown = [], ids = [];

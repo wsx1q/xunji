@@ -168,10 +168,16 @@ function accRows(isOn, click, skip = '', lp = false) {
   const opt = (a, sub) => (a.id === skip ? '' : `<div class="opt ${sub ? 'sub' : ''} ${isOn(a.id) ? 'on' : ''}" data-v="${a.id}" ${lpAttr(a, sub)} onclick="${click(a.id)}"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}</span><em>${money(sub ? bal[a.id] : accSum(a.id, bal))}</em></div>`); // 上级显示合计（含子账户）
   return accTops().map(a => opt(a) + accKids(a.id).map(k => opt(k, true)).join('')).join('');
 }
-/** 成员 / 商家 / 项目列表。opts 要列出的名字（'' 表示没有设置，显示成 none），click 里用 this.dataset.v 取值 */
+/** 成员 / 商家 / 项目列表。opts 要列出的名字（'' 表示没有设置，显示成 none），click 里用 this.dataset.v 取值。
+    名字后面的数字是记录笔数（「无商家」等也算），和分类、账本一样只显示数字 */
 function tagRows(f, opts, isOn, click, none, lp = false) {
-  const T = TAGS[f];
-  return opts.map(m => `<div class="opt ${isOn(m) ? 'on' : ''}" data-v="${esc(m)}" ${lp && m ? `data-lp="tagpick" data-lpid="${esc(m)}" data-lpg="${f}"` : ''} onclick="${click}"><div class="ci">${m ? T.icon : '∅'}</div><span>${m ? esc(m) : none}</span></div>`).join('');
+  const T = TAGS[f], cnt = tagCounts(f);
+  return opts.map(m => { const n = cnt.get(m || T.def) || 0; return `<div class="opt ${isOn(m) ? 'on' : ''}" data-v="${esc(m)}" ${lp && m ? `data-lp="tagpick" data-lpid="${esc(m)}" data-lpg="${f}"` : ''} onclick="${click}"><div class="ci">${m ? T.icon : '∅'}</div><span>${m ? esc(m) : none}${n ? `<i class="cnt">${n}</i>` : ''}</span></div>`; }).join('');
+}
+/** 成员 / 商家 / 项目各有多少笔记录（成员没填算「本人」，商家 / 项目没填算 ''）；数据没变时用缓存 */
+function tagCounts(f) {
+  const k = 'tagCnt_' + f;
+  return _cache[k] || (_cache[k] = countBy(t => t[f] || TAGS[f].def));
 }
 function accSheet(title, cur, cb) {
   _sheetCb = cb;
@@ -268,7 +274,7 @@ function selBar() {
   document.querySelectorAll('.filters .chip.selc').forEach(c => { c.textContent = SEL ? '☑ 退出多选' : '☑ 多选'; });
   if (!SEL) { bar.innerHTML = ''; return; }
   const ids = L.ids || [], all = ids.length && SEL.size >= ids.length && ids.every(id => SEL.has(id));
-  bar.innerHTML = `<div class="sel-bar"><a onclick="selEnd()">取消</a><a onclick="selAll()">${all ? '全不选' : `全选 ${ids.length} 笔`}</a><span>已选 <b>${SEL.size}</b> 笔</span><button class="btn del" onclick="selDelete()">删除</button></div>`;
+  bar.innerHTML = `<div class="sel-bar"><a onclick="selEnd()">取消</a><a onclick="selAll()">${all ? '全不选' : `全选 ${ids.length} 笔`}</a><span>已选 <b>${SEL.size}</b> 笔</span><button class="btn" onclick="bulkSheet()">批量修改</button></div>`;
 }
 function selAll() {
   const ids = L.ids || [];

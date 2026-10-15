@@ -1,0 +1,23 @@
+# Build outputs and local runtime data
+dist/
+build/
+.venv*/
+__pycache__/
+*.pyc
+node_modules/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Personal configuration and data must never be published
+AGENTS.md
+*.jks
+*.keystore
+*.xjdb
+*.db
+ocr_config.ini
+
+# Desktop sources override any older local folder ignore rule
+!desktop/

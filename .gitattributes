@@ -1,0 +1,13 @@
+# 仓库里统一用 LF；Windows 批处理必须是 CRLF
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制文件
+*.onnx binary
+*.jpg binary
+*.png binary
+*.jks binary
+
+*.gif binary
+*.ico binary

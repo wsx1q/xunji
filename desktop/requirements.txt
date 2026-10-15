@@ -1,0 +1,10 @@
+pywebview==6.2.1
+cryptography==50.0.2
+pyinstaller==6.22.3
+rapidocr==3.10.0
+onnxruntime==1.23.2
+opencv-python-headless==5.0.0.93
+Pillow==12.3.0
+protobuf==7.36.2
+winrt-Windows.Security.Credentials.UI==3.2.1
+winrt-Windows.Foundation==3.2.1

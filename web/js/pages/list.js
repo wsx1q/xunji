@@ -1,10 +1,20 @@
 'use strict';
 /* 流水页与筛选栏 */
 const L = { kind: 'month', ref: Date.now(), type: 'all', q: '', cat: '', member: '', note: '', s: 0, e: Infinity, label: '', limit: 200, F: normBoard({}) };
-const L0 = { type: 'all', q: '', cat: '', exact: false, member: '', note: '', limit: 200 };
+const L0 = { scope: 'current', accountIds: null, sourceType: 'all', detailNote: '', accountLabel: '', catUnknown: false, type: 'all', q: '', cat: '', exact: false, member: '', note: '', limit: 200 };
 const LIST_PAGE = 200;
 function showList() { stack[stack.length - 1].name === 'list' ? render() : go('list'); }
 function openList(kind, cat = '') { Object.assign(L, L0, { kind, ref: Date.now(), cat, limit: LIST_PAGE, F: normBoard({}) }); showList(); }
+/** Every summary link starts from a clean filter, never inherits a previous search. */
+function openLedgerDetails(options = {}) {
+  closeSheet();SEL=null;
+  Object.assign(L,L0,{kind:options.kind||'all',ref:options.ref||Date.now(),cat:options.cat||'',
+    exact:!!options.exact,type:options.type||'all',member:options.member||'',limit:LIST_PAGE,
+    F:normBoard(options.filters||{}),scope:options.scope||'current',accountIds:options.accountIds??null,
+    accountLabel:options.accountLabel||'',sourceType:options.sourceType||'all',detailNote:options.detailNote||'',
+    catUnknown:!!options.catUnknown,s:options.s??0,e:options.e??Infinity,label:options.label||''});
+  showList();
+}
 /* 搜索历史：搜索框失去焦点（按回车 / 点别处）时记下关键词，最多 8 个；搜索框为空且获得焦点时显示 */
 const Q_HIST_MAX = 8;
 const qHist = () => (Array.isArray(S.settings.searchHist) ? S.settings.searchHist : []);
@@ -52,7 +62,7 @@ const lfActive = () => Object.keys(LF_FIELDS).filter(k => LF_FIELDS[k].val());
 /** 复用看板编辑的选择面板：选择期间让 BD 指向 L.F，面板里的「确定」会 render() 回到流水页 */
 function lfPick(k) { L.F.type = L.type; BD = L.F; L.limit = LIST_PAGE; LF_FIELDS[k].pick(); }
 function lfClear(k, ev) { if (ev) ev.stopPropagation(); LF_FIELDS[k].clear(); L.limit = LIST_PAGE; render(); }
-function lfClearAll() { L.F = normBoard({}); L.cat = L.member = L.note = ''; L.limit = LIST_PAGE; render(); }
+function lfClearAll() { L.accountIds=null;L.sourceType='all';L.detailNote='';L.accountLabel='';L.catUnknown=false;L.F = normBoard({}); L.cat = L.member = L.note = ''; L.limit = LIST_PAGE; render(); }
 function pickLfAmount() {
   const quick = (n, a, b) => `<i class="chip ${L.F.min === a && L.F.max === b ? 'on' : ''}" onclick="L.F.min=${a === '' ? "''" : a};L.F.max=${b === '' ? "''" : b};L.limit=${LIST_PAGE};closeSheet();render()">${n}</i>`;
   openSheet('金额区间', `<div class="chips" style="flex-wrap:wrap;margin-bottom:10px">${quick('小于 0（负数）', '', -0.01)}${quick('大于 0', 0.01, '')}</div>
@@ -87,7 +97,7 @@ function lfSaveBoard() {
   toast(lfDates() ? '已带入当前筛选条件，起个名字保存' : '已带入当前筛选条件（时间为不限，可在这里设置）');
 }
 function lfBar() {
-  const act = lfActive(), extra = !!(L.cat || L.member || L.note);
+  const act = lfActive(), extra = !!(L.cat || L.member || L.note || L.catUnknown || Array.isArray(L.accountIds) || (L.sourceType&&L.sourceType!=='all'));
   const chip = k => {
     const f = LF_FIELDS[k], v = f.val();
     return `<i class="chip fc ${v ? 'on' : ''}" onclick="lfPick('${k}')">${v ? `${f.name}：${esc(v)}<b class="fx" onclick="lfClear('${k}',event)">✕</b>` : `${f.icon} ${f.name} ▾`}</i>`;
@@ -104,10 +114,14 @@ Pages.list = () => {
     <div class="seg">${kinds.map(([k, n]) => `<i class="${!lfDates() && L.kind === k ? 'on' : ''}" onclick="L.kind='${k}';L.ref=Date.now();L.F.start=L.F.end='';L.limit=${LIST_PAGE};render()">${n}</i>`).join('')}</div>
     <div class="period">${lfDates() ? `<span onclick="lfPick('time')">${esc(whenText(L.F))}</span>` : L.kind === 'custom' ? `<span>${esc(L.label)}</span>` : L.kind === 'all' ? '<span>全部时间</span>' : `<b onclick="shiftL(-1)">‹</b><span class="pp" onclick="periodSheet(L.kind,L.ref,t=>{L.ref=t;L.limit=LIST_PAGE;render()})">${periodLabel(L.kind, L.ref)}</span><b class="${isFuture(L.kind, L.ref) ? 'dis' : ''}" onclick="shiftL(1)">›</b>`}</div>
     <div class="sum3" id="lsum"></div></div>
+  ${L.scope==='allBooks'?'<div class="ledger-context">统计范围：全部账本</div>':''}${L.detailNote?`<div class="ledger-context">${esc(L.detailNote)}</div>`:''}
   <div class="filters"><input id="q" class="search" placeholder="搜索备注 / 分类 / 账户 / 商家 / 项目 / 金额" value="${esc(L.q)}" oninput="L.q=this.value;L.limit=${LIST_PAGE};clearTimeout(L._qt);L._qt=setTimeout(renderListBody,180);qHistShow(true)"
       onfocus="qHistShow(true)" onblur="qHistAdd(this.value);setTimeout(()=>qHistShow(false),200)" onkeydown="if(event.key==='Enter')this.blur()" enterkeyhint="search">
     <div id="qhist" class="qhist"></div>
     <div class="chips">${[['all', '全部'], ['expense', '支出'], ['income', '收入'], ['transfer', '转账'], ['adjust', '余额变更']].map(([k, n]) => `<i class="chip ${L.type === k ? 'on' : ''}" onclick="L.type='${k}';L.limit=${LIST_PAGE};render()">${n}</i>`).join('')}
+    ${Array.isArray(L.accountIds)?`<i class="chip on" onclick="L.accountIds=null;L.detailNote=L.accountLabel='';render()">${esc(L.accountLabel||'账户范围')} · ${L.accountIds.length} 个账户 ✕</i>`:''}
+    ${L.sourceType&&L.sourceType!=='all'?`<i class="chip on" onclick="L.sourceType='all';render()">看板限定：${TX_TYPES[L.sourceType]} ✕</i>`:''}
+    ${L.catUnknown?`<i class="chip on" onclick="L.catUnknown=false;render()">未分类 ✕</i>`:''}
     ${L.cat ? `<i class="chip on" onclick="L.cat='';L.limit=${LIST_PAGE};render()">${catById(L.cat).icon} ${esc(catLabel(L.cat))}${L.exact && subsOf(L.cat).length ? '（未细分）' : ''} ✕</i>` : ''}
     ${L.member ? `<i class="chip on" onclick="L.member='';L.limit=${LIST_PAGE};render()">👤 ${esc(L.member)} ✕</i>` : ''}
     ${L.note ? `<i class="chip on" onclick="L.note='';L.limit=${LIST_PAGE};render()">📝 备注含“${esc(L.note)}” ✕</i>` : ''}
@@ -117,6 +131,9 @@ Pages.list = () => {
 };
 function matchListTx(t, s, e, q, fm) {
   if (t.time < s || t.time >= e) return false;
+  if(L.sourceType&&L.sourceType!=='all'&&t.type!==L.sourceType)return false;
+  if(Array.isArray(L.accountIds)&&!L.accountIds.includes(t.accountId)&&!L.accountIds.includes(t.toAccountId))return false;
+  if(L.catUnknown&&catById(t.catId)!==UNKNOWN)return false;
   if (fm && !fm(t)) return false;
   if (L.type !== 'all' && t.type !== L.type) return false;
   if (!matchTx(t, L.member, L.note)) return false;
@@ -136,7 +153,9 @@ function renderListBody(append) {
   const shown = [], ids = [];
   let inc = 0, exp = 0, tf = 0;
   // 先用二分定位时间范围，再做关键词和其他筛选，避免按月查看仍扫描整个账本。
-  for (const t of inRange(bookTx(), s, e)) {
+  const source=L.scope==='allBooks'?S.txns:bookTx();
+  if(L.scope==='allBooks')_sortedTx.add(source);
+  for (const t of inRange(source, s, e)) {
     if (!matchListTx(t, s, e, q, fm)) continue;
     shown.push(t);
     ids.push(t.id);

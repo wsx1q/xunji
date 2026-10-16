@@ -14,7 +14,7 @@ function donutSvg(items, total, size = 190, sw = 30) {
   }
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${segs}</svg>`;
 }
-function barChart(series, labels, everyN = 1) {
+function barChart(series, labels, everyN = 1, clicks = []) {
   const W = 340, H = 160, pb = 22, pt = 18, pl = 4;
   const n = labels.length, max = Math.max(1, ...series.flatMap(s => s.vals));
   const gw = (W - pl) / n, bw = Math.min(16, gw * 0.7 / series.length);
@@ -25,7 +25,7 @@ function barChart(series, labels, everyN = 1) {
     const gx = pl + i * gw + (gw - bw * series.length) / 2;
     series.forEach((s, j) => {
       const v = s.vals[i], h = (H - pb - pt) * v / max;
-      if (v > 0) out += `<rect x="${gx + j * bw}" y="${H - pb - h}" width="${bw - (series.length > 1 ? 1 : 0)}" height="${Math.max(h, 1.5)}" rx="${Math.min(3, bw / 3)}" fill="${s.color}"/>`;
+      if (v > 0) out += `<rect ${clicks[i]?`role="button" tabindex="0" aria-label="${esc(labels[i]+'流水详情')}" onclick="event.stopPropagation();${clicks[i]}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();${clicks[i]}}"`: ''} x="${gx + j * bw}" y="${H - pb - h}" width="${bw - (series.length > 1 ? 1 : 0)}" height="${Math.max(h, 1.5)}" rx="${Math.min(3, bw / 3)}" fill="${s.color}"/>`;
     });
     if (i % everyN === 0 || i === n - 1) out += `<text x="${pl + i * gw + gw / 2}" y="${H - 6}" font-size="10" fill="#999" text-anchor="middle">${lb}</text>`;
   });

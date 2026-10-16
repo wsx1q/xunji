@@ -226,6 +226,7 @@ function txItem(t, opt = {}) {
     sign = (t.type === 'expense') === (t.amount >= 0) ? '-' : '+';
     if (t.amount < 0) { amt = -t.amount; cls = t.type === 'expense' ? 'income' : 'expense'; }
   }
+  if(opt.book||(stack[stack.length-1].name==='list'&&L.scope==='allBooks'))sub+=` · 📒 ${esc((S.books.find(b=>b.id===t.bookId)||{}).name||'未知账本')}`;
   return `<div class="tx-w ${SEL && SEL.has(t.id) ? 'on' : ''}" data-id="${t.id}"><div class="tx-act"><i class="cp" onclick="txCopy('${t.id}')">⧉<br>复制</i><i class="ed" onclick="txTap('${t.id}',1)">✎<br>编辑</i><i class="dl" onclick="txDel('${t.id}')">🗑<br>删除</i></div>
     <div class="tx" onclick="txTap('${t.id}')"><i class="tx-ck"></i><div class="ci" style="background:${color}26">${icon}</div>
     <div class="tx-m"><div class="tx-t">${name}</div><div class="tx-s">${sub}</div>${sub2 ? `<div class="tx-s">${sub2}</div>` : ''}</div>

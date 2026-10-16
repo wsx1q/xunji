@@ -9,13 +9,13 @@ Pages.budget = () => {
   const pct = b.total ? spent / b.total : 0;
   const catRows = Object.entries(b.cats).map(([id, amt]) => {
     const c = catById(id), sp = sumArr(tx.filter(t => inCat(t.catId, id))), p = amt ? sp / amt : 0;
-    return `<div class="rank" onclick="setCatBudget('${id}')"><div class="ci" style="background:${c.color}26">${c.icon}</div><div class="rank-m">
+    return `<div class="rank" onclick="homeMonthLedger('expense','${id}')"><div class="ci" style="background:${c.color}26">${c.icon}</div><div class="rank-m">
       <div class="rank-t"><span>${esc(c.name)}<small>已用 ${money(sp)} / ${money(amt, 0)}</small></span><b class="num ${sp > amt ? 'over' : ''}">${sp > amt ? '超支 ' + money(sp - amt) : '余 ' + money(amt - sp)}</b></div>
-      <div class="prog"><i style="width:${Math.min(100, p * 100)}%;background:${p > 1 ? '#E5484D' : p > 0.8 ? '#FFB300' : c.color}"></i></div></div></div>`;
+      <div class="prog"><i style="width:${Math.min(100, p * 100)}%;background:${p > 1 ? '#E5484D' : p > 0.8 ? '#FFB300' : c.color}"></i></div></div><button class="ledger-link" onclick="event.stopPropagation();setCatBudget('${id}')">设置</button></div>`;
   }).join('');
   return hdr(`${now.getMonth() + 1}月预算`) + `<div class="bud-hd grad">
     <div class="ring" onclick="editTotalBudget()">${ringSvg(pct, 'rgba(255,255,255,.28)', left < 0 ? '#FFE14D' : '#fff', 120, 10)}<div class="ring-t"><span style="opacity:.85">${b.total ? (left < 0 ? '已超支' : '剩余') : '未设置'}</span><b>${b.total ? Math.round(Math.abs(1 - pct) * 100) + '%' : '—'}</b></div></div>
-    <div class="bud-info"><div><span>总预算</span><b onclick="editTotalBudget()">${money(b.total)} ✎</b></div><div><span>已支出</span><b>${money(spent)}</b></div>
+    <div class="bud-info"><div><span>总预算</span><b onclick="editTotalBudget()">${money(b.total)} ✎</b></div><div onclick="homeMonthLedger('expense')"><span>已支出</span><b>${money(spent)}</b></div>
       <div><span>${left < 0 ? '超支' : '剩余'}</span><b>${money(Math.abs(left))}</b></div><div><span>日均可用</span><b>${money(left > 0 ? left / daysLeft : 0)}</b></div></div></div>
   <div class="card"><div class="card-hd"><b>分类预算</b><a onclick="addCatBudget()">＋ 添加</a></div>${catRows || empty('为常用分类设置预算，控制花销更轻松', '🎯')}</div>`;
 };
@@ -54,8 +54,8 @@ function catGridHtml(key) {
   const st = CGS[key], cnt = catCounts(), list = tops(st.type), sel = st.sel || [];
   if (!list.some(t => t.id === st.open)) st.open = (list.find(t => sel.some(id => inCat(id, t.id))) || list[0] || {}).id || '';
   const lp = st.noLp ? '' : st.mode === 'manage' ? 'cat' : 'catpick';
-  const grid = list.map(t => cgTile(t, { on: st.mode !== 'manage' && sel.some(id => inCat(id, t.id)), open: t.id === st.open,
-    n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type, mode: st.mode, partial: st.mode==='multi' && !sel.includes(t.id) && sel.some(id=>inCat(id,t.id)) })).join('');
+  const grid = list.map(t => cgTile(t, { on: st.mode === 'manage' ? !!st.detail && inCat(st.detail,t.id) : sel.some(id => inCat(id, t.id)), open: t.id === st.open,
+    n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type, mode: st.mode, partial: st.mode==='manage' ? !!st.detail && st.detail!==t.id && inCat(st.detail,t.id) : st.mode==='multi' && !sel.includes(t.id) && sel.some(id=>inCat(id,t.id)) })).join('');
   const top = list.find(t => t.id === st.open);
   let sub = '';
   if (top) {
@@ -70,6 +70,7 @@ function catGridHtml(key) {
 function cgTop(key, id) {
   const st = CGS[key];
   // 单选时没有二级分类的一级分类，点一下就选中
+  if(st.mode==='manage')return selectManagedCategory(id);
   if (st.mode === 'single' && !subsOf(id).length) return st.pick(id);
   // 多选：短按一级分类就是选中 / 取消整个分类（同时展开它的二级分类，可以再细选）
   if (st.mode === 'multi') { st.open = id; return st.toggle(id); }
@@ -78,17 +79,35 @@ function cgTop(key, id) {
 }
 function cgPick(key, id) {
   const st = CGS[key];
-  if (st.mode === 'manage') return editCat(id);
+  if (st.mode === 'manage') return selectManagedCategory(id);
   if (st.mode === 'single') return st.pick(id);
   st.toggle(id);
 }
 Pages.cats = () => {
   const st = CGS.manage || (CGS.manage = { mode: 'manage', open: '', rerender: () => render() });
   st.type = CT;
+  if(st.detail&&!S.categories[CT].some(c=>c.id===st.detail))st.detail='';
+  st.sel=st.detail?[st.detail]:[];
   return hdr('分类管理', `<a onclick="editCat()">＋ 一级</a>`) + `<div style="text-align:center;padding:14px 0 0"><div class="seg light">${[['expense', '支出分类'], ['income', '收入分类']].map(([k, n]) => `<i class="${CT === k ? 'on' : ''}" onclick="CT='${k}';render()">${n}</i>`).join('')}</div></div>
+  ${st.detail?managedCategoryPreview(st.detail):''}
   <div class="card cg-card">${catGridHtml('manage')}</div>
-  <div class="ver">图标上的数字是记录笔数。点一级分类展开它的二级分类；长按任何分类可以改名、换图标、删除、合并，长按后拖动调整顺序</div>`;
+  <div class="ver">点选分类查看流水；一级分类包含其二级分类。数字和明细统计全部账本，长按分类可编辑，长按后拖动排序</div>`;
 };
+function selectManagedCategory(id) {
+  const c=S.categories[CT].find(c=>c.id===id);if(!c)return;
+  const st=CGS.manage;st.detail=id;st.open=c.pid||id;render();
+  requestAnimationFrame(()=>$('#catLedger')?.scrollIntoView({block:'start'}));
+}
+function openCategoryLedger(id) {openLedgerDetails({scope:'allBooks',type:CT,cat:id});}
+function managedCategoryPreview(id) {
+  const c=catById(id),recent=[];let n=0,total=0;ensureTxnOrder();
+  for(const t of S.txns)if(t.type===CT&&inCat(t.catId,id)){n++;total+=t.amount;if(recent.length<5)recent.push(t);}
+  return `<section class="card cat-ledger" id="catLedger"><div class="card-hd"><b>${c.icon} ${esc(catLabel(id))} · 流水详情</b><a onclick="editCat('${id}')">编辑分类</a></div>
+    <div class="ledger-context">全部账本 · 全部时间${c.pid?'':' · 包含二级分类'}</div><div class="cat-ledger-total">共 ${n} 笔 · ${CT==='expense'?'支出':'收入'} ${money(r2(total))}</div>
+    <button class="btn ghost" onclick="openCategoryLedger('${id}')">查看全部 ${n} 笔流水 ›</button>
+    ${recent.length?recent.map(t=>txItem(t,{date:true,book:true})).join(''):empty('这个分类还没有流水')}</section>`;
+}
+function openBookLedger(id){switchBook(id);openLedgerDetails();}
 /* 从筛选面板长按进来编辑：保存 / 删除 / 合并后回到筛选面板 */
 let _catReturn = null;
 function catBack(record) { const f = _catReturn; _catReturn = null; if (f) f(record); }
@@ -167,7 +186,7 @@ function renderBookSheet() {
   openSheet(BE.id ? '编辑账本' : '新建账本', `<label>账本名称</label><input id="bName" class="field" value="${esc(BE.name)}" placeholder="如：旅行账本、装修账本" maxlength="12" oninput="BE.name=this.value">
     <label>封面图标</label><div class="emo-grid">${BOOK_ICONS.map(e => `<i class="${e === BE.icon ? 'on' : ''}" onclick="BE.icon='${e}';renderBookSheet()">${e}</i>`).join('')}</div>
     ${BE.id ? `<div class="cat-n">${BE.id === S.curBook ? '这是当前账本' : `<a onclick="switchBook('${BE.id}')" style="color:var(--c)">切换到这个账本 ›</a>`}</div>` : ''}
-    <div class="btn-row">${BE.id && S.books.length > 1 ? `<button class="btn ghost del" onclick="delBook()">删除</button><button class="btn ghost" onclick="bookMergeSheet()">合并到…</button>` : ''}<button class="btn" onclick="saveBook()">保存</button></div>`);
+    <div class="btn-row">${BE.id?`<button class="btn ghost" onclick="openBookLedger('${BE.id}')">切换并查看流水</button>`:''}${BE.id && S.books.length > 1 ? `<button class="btn ghost del" onclick="delBook()">删除</button><button class="btn ghost" onclick="bookMergeSheet()">合并到…</button>` : ''}<button class="btn" onclick="saveBook()">保存</button></div>`);
 }
 function saveBook() {
   const name = (BE.name || '').trim(); if (!name) return toast('请输入账本名称');

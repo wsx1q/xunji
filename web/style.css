@@ -554,3 +554,5 @@ textarea.note{height:50px;min-height:36px;max-height:120px;resize:vertical;paddi
 .cg-filter-head>button{font-size:12px;padding:7px 10px;border:1px dashed #F4AE91;border-radius:8px;background:#FFF4ED;color:#B84C25;cursor:pointer}
 .cg-sub .chip.on{background:var(--c);border-color:var(--c);color:#fff;font-weight:600;box-shadow:0 2px 5px #F16B3D26}
 .cg-sub .chip.on::before{content:'✓';margin-right:4px;font-weight:700}.cg-sub .chip.on .cnt{color:#fff;opacity:1}
+
+.ledger-context{font-size:12px;line-height:1.6;color:var(--t2);padding:8px 16px;background:#FFF8F3}.cat-ledger .ledger-context{padding:6px 0;background:none}.cat-ledger-total{font-size:16px;font-weight:600;padding:8px 0 12px}.ledger-link{flex:none;border:1px solid #FFD2C0;background:#FFF4ED;border-radius:7px;padding:7px 9px;font-size:12px;color:#B84C25;cursor:pointer}.cat-ledger .tx-w{margin:0 -2px}.home-hd [onclick],.home-w [onclick],.chart [role=button]{cursor:pointer}

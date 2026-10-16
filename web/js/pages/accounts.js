@@ -16,8 +16,8 @@ Pages.accounts = () => {
           + (bal[a.id] ? `<div class="acc sub dim" onclick="go('account','${a.id}')"><div class="ci">·</div><span>直接记在「${esc(a.name)}」<small>未分到子账户</small></span><b>${money(bal[a.id])}</b></div>` : ''));
       }).join('')}</div>`;
   }).join('');
-  return hdr('账户', `<a onclick="editAcc()">＋ 添加</a>`) + `<div class="hero grad"><small>净资产（元）</small><div class="big">${money(asset - debt)}</div>
-    <div class="hd-sub"><span>总资产 ${money(asset)}</span><span>总负债 ${money(debt)}</span></div>
+  return hdr('账户', `<a onclick="editAcc()">＋ 添加</a>`) + `<div class="hero grad"><small>净资产（元）</small><div class="big" onclick="homeAssetLedger('net')">${money(asset - debt)}</div>
+    <div class="hd-sub"><span onclick="homeAssetLedger('asset')">总资产 ${money(asset)}</span><span onclick="homeAssetLedger('debt')">总负债 ${money(debt)}</span></div>
     <div class="hero-btns"><a onclick="startAdd(null,{type:'transfer'})">🔁 转账</a><a onclick="editAcc()">＋ 添加账户</a></div></div>`
     + (S.accounts.some(a => a.pid) ? `<div class="seg acc-seg">${[[0, '分开显示子账户'], [1, '合计显示']].map(([v, n]) => `<i class="${+merge === v ? 'on' : ''}" onclick="S.settings.accMerge=${!!v};save();render()">${n}</i>`).join('')}</div>` : '')
     + (groups ? groups + '<div class="ver">长按账户可修改名称、备注（如卡号）；长按后拖动可调整顺序</div>' : `<div class="card">${empty('还没有账户', '💳')}</div>`);

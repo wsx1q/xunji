@@ -32,11 +32,11 @@ const catCounts = () => _cache.catCnt || (_cache.catCnt = countBy(t => t.catId))
 const catTotal = (cnt, id) => (cnt.get(id) || 0) + subsOf(id).reduce((a, s) => a + (cnt.get(s.id) || 0), 0);
 /* ================= 分类网格：记一笔、分类管理、所有选分类的面板共用 =================
    一级分类是图标网格（和记一笔一样），点一个在下面一行展开它的二级分类；图标右上角的数字是记录笔数。
-   短按 = 选择（分类管理里：点一级展开、点二级编辑）；长按 = 编辑（改名、图标、删除、合并）；长按后拖动排序。 */
+   短按 = 选择（分类管理支持多选后统一查看流水）；长按 = 编辑（改名、图标、删除、合并）；长按后拖动排序。 */
 const cgNum = n => (n ? `<i class="cg-n">${n > 9999 ? '9999+' : n}</i>` : '');
 /** 一级分类的图标格子（记一笔页也用这个） */
 function cgTile(c, { on, open, n, tap, lp, type, mode, partial }) {
-  const selection = mode==='multi' ? `role="checkbox" aria-label="${esc(c.name)}" aria-checked="${partial?'mixed':!!on}" tabindex="0" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();this.click()}"` : '';
+  const selection = (mode==='multi'||mode==='manage') ? `role="checkbox" aria-label="${esc(c.name)}" aria-checked="${partial?'mixed':!!on}" tabindex="0" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();this.click()}"` : '';
   return `<div class="cg-i ${on ? 'on' : ''} ${open ? 'open' : ''} ${partial ? 'partial' : ''}" data-id="${c.id}" ${selection} ${lp ? `data-lp="${lp}" data-lpid="${c.id}" data-lpg="${type}|"` : ''} onclick="${tap}"><i class="cg-check" aria-hidden="true">${partial?'−':'✓'}</i><div class="ci" style="--cc:${c.color};background:${c.color}26">${c.icon}${cgNum(n)}</div><span>${esc(c.name)}</span></div>`;
 }
 /** 二级分类的小标签 */
@@ -54,15 +54,15 @@ function catGridHtml(key) {
   const st = CGS[key], cnt = catCounts(), list = tops(st.type), sel = st.sel || [];
   if (!list.some(t => t.id === st.open)) st.open = (list.find(t => sel.some(id => inCat(id, t.id))) || list[0] || {}).id || '';
   const lp = st.noLp ? '' : st.mode === 'manage' ? 'cat' : 'catpick';
-  const grid = list.map(t => cgTile(t, { on: st.mode === 'manage' ? !!st.detail && inCat(st.detail,t.id) : sel.some(id => inCat(id, t.id)), open: t.id === st.open,
-    n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type, mode: st.mode, partial: st.mode==='manage' ? !!st.detail && st.detail!==t.id && inCat(st.detail,t.id) : st.mode==='multi' && !sel.includes(t.id) && sel.some(id=>inCat(id,t.id)) })).join('');
+  const grid = list.map(t => cgTile(t, { on: sel.some(id => inCat(id, t.id)), open: t.id === st.open,
+    n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type, mode: st.mode, partial: (st.mode==='manage'||st.mode==='multi') && !sel.includes(t.id) && sel.some(id=>inCat(id,t.id)) })).join('');
   const top = list.find(t => t.id === st.open);
   let sub = '';
   if (top) {
     const all = sel.includes(top.id);
     const whole = st.mode === 'single' ? `<i class="chip ${all ? 'on' : ''}" onclick="cgPick('${key}','${top.id}')">只记到「${esc(top.name)}」</i>`
       : '';
-    sub = `<div class="cg-sub"><small>${top.icon} ${esc(top.name)} ›</small>${whole}${subsOf(top.id).map(s => cgChip(s, { on: sel.includes(s.id) || (st.mode === 'multi' && all),
+    sub = `<div class="cg-sub"><small>${top.icon} ${esc(top.name)} ›</small>${whole}${subsOf(top.id).map(s => cgChip(s, { on: sel.includes(s.id) || ((st.mode === 'multi'||st.mode === 'manage') && all),
       n: cnt.get(s.id) || 0, tap: `cgPick('${key}','${s.id}')`, lp, type: st.type })).join('')}${st.mode === 'manage' ? `<i class="chip sub-add" onclick="editCat('','${top.id}')">＋ 二级分类</i>` : st.mode === 'multi' ? `<button type="button" class="chip sub-add" onclick="newFilterCat('${st.type}','${top.id}')">＋ 二级分类</button>` : ''}</div>`;
   }
   return `<div class="cgrid">${grid}</div>${sub}`;
@@ -85,19 +85,22 @@ function cgPick(key, id) {
 }
 Pages.cats = () => {
   const st = CGS.manage || (CGS.manage = { mode: 'manage', open: '', rerender: () => render() });
-  st.type = CT;
-  if(st.detail&&!S.categories[CT].some(c=>c.id===st.detail))st.detail='';
-  st.sel=st.detail?[st.detail]:[];
+  st.type = CT;st.selections ||= {};
+  st.sel = st.selections[CT] = (st.selections[CT]||[]).filter(id=>S.categories[CT].some(c=>c.id===id));
   return hdr('分类管理', `<a onclick="editCat()">＋ 一级</a>`) + `<div style="text-align:center;padding:14px 0 0"><div class="seg light">${[['expense', '支出分类'], ['income', '收入分类']].map(([k, n]) => `<i class="${CT === k ? 'on' : ''}" onclick="CT='${k}';render()">${n}</i>`).join('')}</div></div>
+  <div class="card cat-ledger-actions"><button class="btn ghost" onclick="CGS.manage.selections[CT]=[];render()" ${st.sel.length?'':'disabled'}>清空</button><button class="btn" onclick="openCategoryLedger()" ${st.sel.length?'':'disabled'}>查看所选流水（${st.sel.length}）</button></div>
   <div class="card cg-card">${catGridHtml('manage')}</div>
-  <div class="ver">点选分类查看流水；一级分类包含其二级分类。数字和明细统计全部账本，长按分类可编辑，长按后拖动排序</div>`;
+  <div class="ver">可多选分类，再点「查看所选流水」。一级分类包含其二级分类，点二级分类可细选。数字和明细统计全部账本，长按分类可编辑，长按后拖动排序</div>`;
 };
 function selectManagedCategory(id) {
   const c=S.categories[CT].find(c=>c.id===id);if(!c)return;
-  const st=CGS.manage;st.detail=id;st.open=c.pid||id;render();
-  openCategoryLedger(id);
+  const st=CGS.manage;st.open=c.pid||id;
+  if(c.pid&&st.sel.includes(c.pid))st.sel=st.sel.filter(x=>x!==c.pid);
+  if(!c.pid&&!st.sel.includes(id))st.sel=st.sel.filter(x=>catById(x).pid!==id);
+  const i=st.sel.indexOf(id);i>=0?st.sel.splice(i,1):st.sel.push(id);
+  st.selections[CT]=st.sel;render();
 }
-function openCategoryLedger(id) {openLedgerDetails({scope:'allBooks',type:CT,cat:id});}
+function openCategoryLedger() {const ids=CGS.manage?.sel||[];if(!ids.length)return;openLedgerDetails({scope:'allBooks',type:CT,filters:{cats:[...ids]}});}
 function openBookLedger(id){switchBook(id);openLedgerDetails();}
 /* 从筛选面板长按进来编辑：保存 / 删除 / 合并后回到筛选面板 */
 let _catReturn = null;

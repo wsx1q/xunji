@@ -44,7 +44,7 @@ const QUICK = {
   accounts: ['💳', '账户', "go('accounts')", '#FFF1EA'], budget: ['🎯', '预算', "go('budget')", '#FFF6E0'], report: ['📊', '报表', "tab('report')", '#EAF4FF'],
   list: ['🧾', '流水', "openList('month')", '#EAFBF3'], cats: ['🗂️', '分类', "go('cats')", '#F3EEFF'], books: ['📚', '账本', "go('books')", '#FFEFF4'],
   backup: ['💾', '备份', 'backupSheet()', '#EAF8F8'], transfer: ['🔁', '转账', "startAdd(null,{type:'transfer'})", '#EEF3FF'],
-  members: ['👥', '成员', 'manageMembers()', '#FFF3E8'], csv: ['📤', '导出', 'exportCSV()', '#EAF6EE'],
+  members: ['👥', '成员', 'manageMembers()', '#FFF3E8'], merchants: ['🏪', '商家', "manageTags('merchant')", '#EEF8F6'], projects: ['📁', '项目', "manageTags('project')", '#FFF6E0'], csv: ['📤', '导出', 'exportCSV()', '#EAF6EE'],
   bill: ['📥', '账单导入', 'openBill()', '#EEF1F5'], ocr: ['📷', '识别导入', 'openOcr()', '#F5EEFF']
 };
 if (!HAS_OCR) delete QUICK.ocr;

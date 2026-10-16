@@ -217,7 +217,7 @@ function setBoardGoal(id) {
 }
 function toggleQ(k) {
   const q = S.settings.home.quick, i = q.indexOf(k);
-  if (i >= 0) q.splice(i, 1); else if (q.length >= 12) return toast('最多 12 个'); else q.push(k);
+  if (i >= 0) q.splice(i, 1); else if (QUICK[k]) q.push(k);
   save(); render();
 }
 function pickBook() {

@@ -120,7 +120,7 @@ Pages.dash = () => {
     ${h.widgets.map((w, i) => `<div class="dw" data-lp="homewidget" data-lpid="${esc(w.id)}"><i>${WIDGETS[w.id][0]}</i><span>${WIDGETS[w.id][1]}</span>
       <span class="home-drag-handle" aria-hidden="true">⠿</span>
       <em class="sw ${w.on ? 'on' : ''}" onclick="S.settings.home.widgets[${i}].on=!S.settings.home.widgets[${i}].on;save();render()"></em></div>`).join('')}</div>
-  <div class="card"><div class="card-hd"><b>快捷入口</b><small>按点选顺序排列 · 已选 ${h.quick.length}/12</small></div>
+  <div class="card"><div class="card-hd"><b>快捷入口</b><small>按点选顺序排列 · 已选 ${h.quick.length}/${Object.keys(QUICK).length}</small></div>
     <div class="qsel">${Object.entries(QUICK).map(([k, [ic, nm]]) => `<i class="chip ${h.quick.includes(k) ? 'on' : ''}" onclick="toggleQ('${k}')">${ic} ${nm}${h.quick.includes(k) ? ' · ' + (h.quick.indexOf(k) + 1) : ''}</i>`).join('')}</div></div>
   <div class="card"><div class="card-hd"><b>最近记录显示条数</b></div>
     <div class="chips" style="padding-bottom:14px">${[3, 6, 10, 20].map(k => `<i class="chip ${h.recentN === k ? 'on' : ''}" onclick="S.settings.home.recentN=${k};save();render()">${k} 条</i>`).join('')}</div></div>

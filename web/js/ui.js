@@ -220,12 +220,13 @@ function txItem(t, opt = {}) {
     sign = t.amount >= 0 ? '+' : '-'; cls = t.amount >= 0 ? 'income' : 'expense'; amt = Math.abs(t.amount);
   } else {
     const c = catById(t.catId); icon = c.icon; color = topOf(t.catId).color; name = esc(catLabel(t.catId));
-    sub = [time, esc(accName(t.accountId)), t.member && t.member !== '本人' && esc(t.member)].filter(Boolean).join(' · ');
+    sub = [time, esc(accName(t.accountId)), esc(t.member || '本人')].filter(Boolean).join(' · ');
     sub2 = [t.merchant && '🏪' + esc(t.merchant), t.project && '📁' + esc(t.project), t.note && esc(t.note)].filter(Boolean).join(' · ');
     // 负数金额（如记成负支出的退款）：支出 -(-5) 显示 +5.00、颜色同收入；负收入显示 -5.00
     sign = (t.type === 'expense') === (t.amount >= 0) ? '-' : '+';
     if (t.amount < 0) { amt = -t.amount; cls = t.type === 'expense' ? 'income' : 'expense'; }
   }
+  if(t.type==='transfer'||t.type==='adjust')sub+=` · ${esc(t.member||'本人')}`;
   if(opt.book||(stack[stack.length-1].name==='list'&&L.scope==='allBooks'))sub+=` · 📒 ${esc((S.books.find(b=>b.id===t.bookId)||{}).name||'未知账本')}`;
   return `<div class="tx-w ${SEL && SEL.has(t.id) ? 'on' : ''}" data-id="${t.id}"><div class="tx-act"><i class="cp" onclick="txCopy('${t.id}')">⧉<br>复制</i><i class="ed" onclick="txTap('${t.id}',1)">✎<br>编辑</i><i class="dl" onclick="txDel('${t.id}')">🗑<br>删除</i></div>
     <div class="tx" onclick="txTap('${t.id}')"><i class="tx-ck"></i><div class="ci" style="background:${color}26">${icon}</div>

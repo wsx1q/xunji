@@ -556,3 +556,5 @@ textarea.note{height:50px;min-height:36px;max-height:120px;resize:vertical;paddi
 .cg-sub .chip.on::before{content:'✓';margin-right:4px;font-weight:700}.cg-sub .chip.on .cnt{color:#fff;opacity:1}
 
 .ledger-context{font-size:12px;line-height:1.6;color:var(--t2);padding:8px 16px;background:#FFF8F3}.ledger-link{flex:none;border:1px solid #FFD2C0;background:#FFF4ED;border-radius:7px;padding:7px 9px;font-size:12px;color:#B84C25;cursor:pointer}.home-hd [onclick],.home-w [onclick],.chart [role=button]{cursor:pointer}
+
+.cat-ledger-actions{display:flex;gap:10px;padding:10px 14px;position:sticky;top:54px;z-index:6}.cat-ledger-actions .btn{margin:0;flex:1}.cat-ledger-actions .btn.ghost{flex:0 0 70px}.cat-ledger-actions .btn:disabled{opacity:.4;cursor:default}

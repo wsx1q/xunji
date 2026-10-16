@@ -63,7 +63,7 @@ function catGridHtml(key) {
     const whole = st.mode === 'single' ? `<i class="chip ${all ? 'on' : ''}" onclick="cgPick('${key}','${top.id}')">只记到「${esc(top.name)}」</i>`
       : '';
     sub = `<div class="cg-sub"><small>${top.icon} ${esc(top.name)} ›</small>${whole}${subsOf(top.id).map(s => cgChip(s, { on: sel.includes(s.id) || (st.mode === 'multi' && all),
-      n: cnt.get(s.id) || 0, tap: `cgPick('${key}','${s.id}')`, lp, type: st.type })).join('')}${st.mode === 'manage' ? `<i class="chip sub-add" onclick="editCat('','${top.id}')">＋ 二级分类</i>` : ''}</div>`;
+      n: cnt.get(s.id) || 0, tap: `cgPick('${key}','${s.id}')`, lp, type: st.type })).join('')}${st.mode === 'manage' ? `<i class="chip sub-add" onclick="editCat('','${top.id}')">＋ 二级分类</i>` : st.mode === 'multi' ? `<button type="button" class="chip sub-add" onclick="newFilterCat('${st.type}','${top.id}')">＋ 二级分类</button>` : ''}</div>`;
   }
   return `<div class="cgrid">${grid}</div>${sub}`;
 }
@@ -91,7 +91,7 @@ Pages.cats = () => {
 };
 /* 从筛选面板长按进来编辑：保存 / 删除 / 合并后回到筛选面板 */
 let _catReturn = null;
-function catBack() { const f = _catReturn; _catReturn = null; if (f) f(); }
+function catBack(record) { const f = _catReturn; _catReturn = null; if (f) f(record); }
 function editCat(id, pid = '', ret = null) {
   _catReturn = ret;
   const c = id && S.categories[CT].find(x => x.id === id);
@@ -112,7 +112,11 @@ function renderCatSheet() {
     ${sub ? `<label>所属一级分类</label><div class="chips" style="flex-wrap:wrap">${tops(CT).map(t => `<i class="chip ${t.id === CE.pid ? 'on' : ''}" onclick="CE.pid='${t.id}';renderCatSheet()">${t.icon} ${esc(t.name)}</i>`).join('')}</div>` : ''}
     <label>图标</label><div class="emo-grid">${EMOJIS.map(e => `<i class="${e === CE.icon ? 'on' : ''}" onclick="CE.icon='${e}';renderCatSheet()">${e}</i>`).join('')}</div>
     ${sub ? '' : `<label>颜色（二级分类跟随一级分类）</label><div class="color-grid">${COLORS.map(c => `<i class="${c === CE.color ? 'on' : ''}" style="background:${c}" onclick="CE.color='${c}';renderCatSheet()"></i>`).join('')}</div>`}
-    <div class="btn-row">${CE.id ? `<button class="btn ghost del" onclick="delCat()">删除</button><button class="btn ghost" onclick="catMergeSheet()">合并到…</button>` : ''}<button class="btn" onclick="saveCat()">保存</button></div>`);
+    <div class="btn-row">${CE.id ? `<button class="btn ghost del" onclick="delCat()">删除</button><button class="btn ghost" onclick="catMergeSheet()">合并到…</button>` : _catReturn ? `<button class="btn ghost" onclick="closeSheet();catBack()">取消</button>` : ''}<button class="btn" onclick="saveCat()">保存</button></div>`);
+  if(_catReturn){
+    $('#sheet .sh-hd b')?.setAttribute('onclick','closeSheet();catBack()');
+    $('#sheet .sh-mask')?.setAttribute('onclick','closeSheet();catBack()');
+  }
 }
 function saveCat() {
   const name = (CE.name || '').trim(); if (!name) return toast('请输入分类名称');
@@ -122,7 +126,7 @@ function saveCat() {
   if (CE.id) list[list.findIndex(x => x.id === CE.id)] = rec; else list.push(rec);
   if (!pid) list.forEach(x => { if (x.pid === rec.id) x.color = rec.color; });
   if (!CE.id && pid && E && stack[stack.length - 1].name === 'add') E.catId = rec.id;
-  save(); closeSheet(); render(); toast('已保存'); catBack();
+  save(); closeSheet(); render(); toast('已保存'); catBack(rec);
 }
 function delCat() {
   const list = S.categories[CT];

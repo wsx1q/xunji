@@ -549,5 +549,8 @@ textarea.note{height:50px;min-height:36px;max-height:120px;resize:vertical;paddi
 .cg-check{display:none;position:absolute;left:3px;top:3px;z-index:1;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;background:var(--c);color:#fff;font-size:12px;font-style:normal;font-weight:700;line-height:1}
 .cg-i.on .cg-check{display:flex}.cg-i.on.partial{border-style:dashed}.cg-i.on.partial .cg-check{background:#fff;color:var(--c);box-shadow:0 0 0 1px var(--c)}
 .cg-i:focus-visible{outline:2px solid #4269A8;outline-offset:2px}
+.cg-filter-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 4px}
+.cg-filter-head>b{font-size:12px;color:var(--t2);font-weight:500}
+.cg-filter-head>button{font-size:12px;padding:7px 10px;border:1px dashed #F4AE91;border-radius:8px;background:#FFF4ED;color:#B84C25;cursor:pointer}
 .cg-sub .chip.on{background:var(--c);border-color:var(--c);color:#fff;font-weight:600;box-shadow:0 2px 5px #F16B3D26}
 .cg-sub .chip.on::before{content:'✓';margin-right:4px;font-weight:700}.cg-sub .chip.on .cnt{color:#fff;opacity:1}

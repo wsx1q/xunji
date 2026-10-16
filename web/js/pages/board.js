@@ -66,7 +66,21 @@ function pickBdCats() {
     Object.assign(st, { sel: BD.cats, toggle: pickBdCat, rerender: pickBdCats });
   }
   multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">✓ 表示整类选中，− 表示只选了部分二级分类。点一级分类选中整类，再点二级分类可细选；数字是记录笔数，长按可编辑</div>`
-    + types.map(tp => `${types.length > 1 ? `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` : ''}<div class="cg-box">${catGridHtml('multi-' + tp)}</div>`).join(''));
+    + types.map(tp => `<div class="cg-filter-head"><b>${tp === 'expense' ? '支出分类' : '收入分类'}</b><button type="button" aria-label="新建${tp === 'expense' ? '支出' : '收入'}一级分类" onclick="newFilterCat('${tp}')">＋ 新建分类</button></div><div class="cg-box">${catGridHtml('multi-' + tp)}</div>`).join(''));
+}
+function newFilterCat(type, pid = '') {
+  const filter=BD, previousType=CT;
+  CT=type;
+  editCat('',pid,record=>{
+    CT=previousType;
+    if(BD!==filter)return;
+    if(record)CGS['multi-'+type].open=pid||record.id;
+    pickBdCats();
+    if(record)requestAnimationFrame(()=>{
+      const selector=pid?`#sheet .cg-sub [data-v="${record.id}"]`:`#sheet .cg-i[data-id="${record.id}"]`;
+      $(selector)?.scrollIntoView({block:'nearest'});
+    });
+  });
 }
 function pickBdCat(id) {
   const c = catById(id);

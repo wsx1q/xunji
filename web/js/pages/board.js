@@ -65,7 +65,7 @@ function pickBdCats() {
     const st = CGS['multi-' + tp] || (CGS['multi-' + tp] = { type: tp, mode: 'multi', open: '' });
     Object.assign(st, { sel: BD.cats, toggle: pickBdCat, rerender: pickBdCats });
   }
-  multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">点一级分类就选中整个分类（含二级），再点二级分类可以只选它；数字是记录笔数；长按分类可以改名、删除、合并</div>`
+  multiSheet('分类（可多选）', 'cats', `<div class="tip" style="margin:0 0 4px">✓ 表示整类选中，− 表示只选了部分二级分类。点一级分类选中整类，再点二级分类可细选；数字是记录笔数，长按可编辑</div>`
     + types.map(tp => `${types.length > 1 ? `<label>${tp === 'expense' ? '支出分类' : '收入分类'}</label>` : ''}<div class="cg-box">${catGridHtml('multi-' + tp)}</div>`).join(''));
 }
 function pickBdCat(id) {

@@ -1,4 +1,5 @@
 'use strict';
+const NOTE_MAX = 4000;
 /* 基础工具：选择器、转义、金额 / 日期格式化、时间段计算 */
 const KEY = 'xj_offline_v1';
 const $ = (s, el = document) => el.querySelector(s);
@@ -12,6 +13,8 @@ const money = (n, dec = 2) => {
 };
 const r2 = n => Math.round(n * 100) / 100;
 const pad = n => String(n).padStart(2, '0');
+// 跨过一次浏览器绘制机会，用于测量页面从更新 DOM 到显示的耗时。
+const afterPaint = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 /** 搜索用：英文不分大小写（q 传进来前已经转成小写） */
 const hasText = (s, q) => String(s || '').toLowerCase().includes(q);
 const WEEK = '日一二三四五六';

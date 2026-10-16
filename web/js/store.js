@@ -113,10 +113,10 @@ function decodeDb(d) {
   if (d) { delete d.txnFmt; delete d.txnDict; }
   return d;
 }
-function saveParts() {
+function saveParts(unsentOnly = false) {
   const chunks = yearChunks();
   const { txns, ...meta } = S;
-  for (const c of chunks) if (c.str == null) c.str = JSON.stringify(txEncYear(c.refs));
+  for (const c of chunks) if (c.str == null && (!unsentOnly || !c.sent)) c.str = JSON.stringify(txEncYear(c.refs));
   // 字典放在所有片段编码之后再序列化，保证包含新加的字符串
   return { meta: JSON.stringify({ ...meta, txnFmt: 3, txnDict: _txDict.list }), chunks };
 }
@@ -128,21 +128,26 @@ function fullJson() {
 }
 function flushSave() {
   clearTimeout(_saveT);
-  if (!_saveDirty || !S) return;
+  if (!_saveDirty || !S) return '';
   _saveDirty = false;
   if (!NATIVE) {
-    try { localStorage.setItem(KEY, fullJson()); } catch (e) { toast('浏览器存储空间不足，请改用 App'); }
+    try { localStorage.setItem(KEY, fullJson()); } catch (e) { const err = '浏览器存储空间不足，请改用 App'; toast(err); return err; }
     window._dbDirty = true;
-    return;
+    return '';
   }
-  if (!Android.dbCommit) { const err = Android.dbSave(fullJson()); if (err) toast('保存失败：' + err); return; }
-  const { meta, chunks } = saveParts();
-  const send = all => chunks.forEach(c => { if (all || !c.sent) { Android.dbPart(String(c.y), c.str); c.sent = true; } });
+  if (!Android.dbCommit) { const err = Android.dbSave(fullJson()); if (err) toast('保存失败：' + err); return err || ''; }
+  const { meta, chunks } = saveParts(!!window.XUNJI_DESKTOP);
+  const send = all => chunks.forEach(c => { if (all || !c.sent) {
+    if(c.str == null)c.str = JSON.stringify(txEncYear(c.refs));
+    Android.dbPart(String(c.y), c.str); c.sent = true;
+  } });
   send(false);
   const years = chunks.map(c => c.y).join(',');
   let err = Android.dbCommit(meta, years);
   if (err === 'missing') { send(true); err = Android.dbCommit(meta, years); }
   if (err) toast('保存失败：' + err);
+  else if(window.XUNJI_DESKTOP)chunks.forEach(c => { c.str = null; }); // Native host owns the saved serialized chunks.
+  return err || '';
 }
 window.onSaveError = err => toast('保存失败：' + err);
 /** 流水按年份分片（S.txns 按时间倒序，同一年连续），与上次相同引用的年份复用缓存 */
@@ -217,12 +222,13 @@ function nativeData(r) {
   finally { try { Android.dbChunkDrop(); } catch (e) { } }
   return parts.length ? parts.join('') : null;
 }
+let _startupPerf = null, _startupMeasuring = false, _startupWaited = false;
 function boot() {
   closeSheet();
   if (!NATIVE) return start(localStorage.getItem(KEY));
   const r = JSON.parse(Android.dbOpen());
   if (r.ok) start(nativeData(r));
-  else if (r.need === 'password') dbUnlockScreen();
+  else if (r.need === 'password') { _startupWaited = true; dbUnlockScreen(); }
   else dbErrorScreen(r.err);
 }
 let _bootS = null;
@@ -254,6 +260,15 @@ function start(data, demo = false) {
   $('#lock').className = '';
   stack.length = 0; stack.push({ name: 'home' });
   render(); showLock();
+  if (TEST_TOOLS && !_startupMeasuring) {
+    _startupMeasuring = true;
+    afterPaint().then(() => {
+      let native = null;
+      try { if (NATIVE && Android.startupInfo) native = JSON.parse(Android.startupInfo()); } catch (e) { }
+      _startupPerf = { ms: native ? native.elapsedMs : performance.now(), cold: native ? native.cold : null,
+        waited: _startupWaited };
+    });
+  }
   checkSharedFile();
 }
 /** 从其他应用「用其他应用打开」/ 分享过来的账单文件 */

@@ -56,9 +56,15 @@ Pages.report = () => {
     const d = new Date(R.ref), days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
     vals = Array(days).fill(0); labels = Array.from({ length: days }, (_, i) => i + 1); everyN = 5;
     tx.forEach(t => vals[new Date(t.time).getDate() - 1] += t.amount);
-  } else {
+  } else if (R.kind === 'year') {
     vals = Array(12).fill(0); labels = Array.from({ length: 12 }, (_, i) => (i + 1) + '月'); everyN = 1;
     tx.forEach(t => vals[new Date(t.time).getMonth()] += t.amount);
+  } else {
+    const years = new Map();
+    tx.forEach(t => {const year=new Date(t.time).getFullYear();years.set(year,(years.get(year)||0)+t.amount);});
+    const ordered=[...years].sort((a,b)=>a[0]-b[0]);
+    labels=ordered.map(([year])=>year+'年');vals=ordered.map(([,amount])=>amount);
+    everyN=Math.max(1,Math.ceil(labels.length/6));
   }
   const unit = R.kind === 'month' ? '日' : '月';
   const now = Date.now();
@@ -73,9 +79,9 @@ Pages.report = () => {
   return `<div class="r-hd grad">
     <div style="display:flex;justify-content:center;gap:10px;padding-top:6px">
       <div class="seg">${[['expense', '支出'], ['income', '收入']].map(([k, n]) => `<i class="${R.type === k ? 'on' : ''}" onclick="R.type='${k}';R.pcat='';render()">${n}</i>`).join('')}</div>
-      <div class="seg">${[['month', '月报'], ['year', '年报']].map(([k, n]) => `<i class="${R.kind === k ? 'on' : ''}" onclick="R.kind='${k}';R.ref=Date.now();render()">${n}</i>`).join('')}</div>
+      <div class="seg">${[['month', '月报'], ['year', '年报'], ['all', '全部']].map(([k, n]) => `<i class="${R.kind === k ? 'on' : ''}" onclick="R.kind='${k}';R.ref=Date.now();render()">${n}</i>`).join('')}</div>
     </div>
-    <div class="period"><b onclick="R.ref=shiftRef(R.kind,R.ref,-1);render()">‹</b><span class="pp" onclick="periodSheet(R.kind,R.ref,t=>{R.ref=t;render()})">${periodLabel(R.kind, R.ref)}</span><b class="${isFuture(R.kind, R.ref) ? 'dis' : ''}" onclick="R.ref=shiftRef(R.kind,R.ref,1);render()">›</b></div>
+    <div class="period">${R.kind==='all'?'<span>全部时间</span>':`<b onclick="R.ref=shiftRef(R.kind,R.ref,-1);render()">‹</b><span class="pp" onclick="periodSheet(R.kind,R.ref,t=>{R.ref=t;render()})">${periodLabel(R.kind, R.ref)}</span><b class="${isFuture(R.kind, R.ref) ? 'dis' : ''}" onclick="R.ref=shiftRef(R.kind,R.ref,1);render()">›</b>`}</div>
     <div class="sum3">${sum3(all)}</div></div>
   <div class="card"><div class="card-hd">${R.pcat ? `<b><a onclick="R.pcat='';render()" style="color:var(--c);font-size:15px">‹ 全部</a> ${esc(catById(R.pcat).name)} · 二级分类</b>` : `<b>${tName}构成</b>`}<small>共 ${tx.length} 笔</small></div>
     <div class="donut-wrap">${donutSvg(items, total)}<div class="donut-c"><small>${R.pcat ? esc(catById(R.pcat).name) : '总' + tName}</small><b>${money(total)}</b></div></div>
@@ -83,7 +89,7 @@ Pages.report = () => {
     ${items.length ? items.map(it => rankRow(it.c.icon, it.color, esc(it.name) + (!R.pcat && subsOf(it.id).length ? ' ›' : ''), `${(it.amt / total * 100).toFixed(1)}% · ${it.n}笔`, it.amt, items[0].amt, it.fn)).join('') : empty('本期暂无' + tName, '📊')}
     ${R.pcat ? '' : `<div class="ver" style="padding:6px 0 12px">点击带 › 的分类查看二级分类构成</div>`}
   </div>
-  <div class="card"><div class="card-hd"><b>${tName}趋势</b><small>${unit}均 ${money(passed ? total / passed : 0)}</small></div>
+  <div class="card"><div class="card-hd"><b>${tName}趋势</b><small>${R.kind==='all'?`按年汇总 · ${labels.length} 年`:`${unit}均 ${money(passed ? total / passed : 0)}`}</small></div>
     ${barChart([{ vals: vals.map(r2), color: colorHex }], labels, everyN)}</div>
   <div class="card"><div class="card-hd"><b>近 6 个月收支对比</b></div>
     ${barChart([{ vals: mi, color: incHex }, { vals: mex, color: expHex }], mLabels)}

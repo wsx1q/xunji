@@ -534,3 +534,20 @@ i{font-style:normal}
 .cg-box .cgrid{gap:14px 0}
 /* 多选面板底部的「全部（不限）/ 确定」：内容很长时也固定在底部 */
 .btn-row.ms-ok{position:sticky;bottom:-18px;background:#fff;margin:6px -18px -18px;padding:2px 18px 14px;box-shadow:0 -6px 12px rgba(255,255,255,.95)}
+/* Shared home layout ordering uses the same long-press gestures as category lists. */
+.dw>.home-drag-handle{flex:0 0 28px;min-width:28px;text-align:center;font-size:25px;color:var(--t3);line-height:36px;user-select:none;touch-action:none}.sec-t>small{font-size:11px;font-weight:400;color:var(--t3);margin-left:auto}
+textarea.note{height:50px;min-height:36px;max-height:120px;resize:vertical;padding:7px 12px;font-family:inherit;line-height:1.5}textarea.ocr-note{width:100%;min-height:150px;resize:vertical;font-family:inherit;line-height:1.7;padding:10px}.oc-t{white-space:pre-line}
+.ocr-progress-card{padding:14px 0;font-size:12px;line-height:1.7}.ocr-progress-card>b,.ocr-progress-card>span,.ocr-progress-card>small{display:block}.ocr-progress-card>b{font-weight:500;color:var(--t1)}.ocr-progress-card>span{color:var(--c);margin:5px 0}.ocr-progress-card>small{color:var(--t3);font-size:11px}.ocr-progress-card>progress{display:block;width:100%;height:9px;accent-color:var(--c);margin:9px 0 12px;border:0;border-radius:6px;overflow:hidden}.ocr-progress-card>progress::-webkit-progress-bar{background:#edeff3;border-radius:6px}.ocr-progress-card>progress::-webkit-progress-value{background:var(--c);border-radius:6px}
+
+.oc-review-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:12px 0;font-size:12px;color:var(--t2)}.oc-review-actions>span{flex:1 1 100%}.oc-it.off.sel{opacity:.8}
+
+.oc-compare-link{cursor:pointer;font:inherit;text-decoration:underline;text-underline-offset:3px;padding:2px 4px}.oc-compare{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}.oc-compare th,.oc-compare td{border:1px solid var(--line);padding:9px 7px;vertical-align:top;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere}.oc-compare th:first-child{width:22%}.oc-compare thead{background:#f7f8fa}.oc-compare tr.different{background:#fff5e7}.oc-compare-page{display:flex;align-items:center;gap:8px;margin:12px 0}.oc-compare-page>span{flex:1;font-size:12px}.oc-compare-page button:disabled{opacity:.4;cursor:default}
+
+/* Keep selection distinct from category colors and expanded-only state. */
+.cg-i{position:relative;border:2px solid transparent;border-radius:12px;padding:8px 3px;min-width:0;box-sizing:border-box}
+.cg-i.on{background:#FFF0E7;border-color:var(--c);box-shadow:0 2px 6px #F16B3D1A}
+.cg-check{display:none;position:absolute;left:3px;top:3px;z-index:1;width:16px;height:16px;border-radius:50%;align-items:center;justify-content:center;background:var(--c);color:#fff;font-size:12px;font-style:normal;font-weight:700;line-height:1}
+.cg-i.on .cg-check{display:flex}.cg-i.on.partial{border-style:dashed}.cg-i.on.partial .cg-check{background:#fff;color:var(--c);box-shadow:0 0 0 1px var(--c)}
+.cg-i:focus-visible{outline:2px solid #4269A8;outline-offset:2px}
+.cg-sub .chip.on{background:var(--c);border-color:var(--c);color:#fff;font-weight:600;box-shadow:0 2px 5px #F16B3D26}
+.cg-sub .chip.on::before{content:'✓';margin-right:4px;font-weight:700}.cg-sub .chip.on .cnt{color:#fff;opacity:1}

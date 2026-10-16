@@ -35,8 +35,9 @@ const catTotal = (cnt, id) => (cnt.get(id) || 0) + subsOf(id).reduce((a, s) => a
    短按 = 选择（分类管理里：点一级展开、点二级编辑）；长按 = 编辑（改名、图标、删除、合并）；长按后拖动排序。 */
 const cgNum = n => (n ? `<i class="cg-n">${n > 9999 ? '9999+' : n}</i>` : '');
 /** 一级分类的图标格子（记一笔页也用这个） */
-function cgTile(c, { on, open, n, tap, lp, type }) {
-  return `<div class="cg-i ${on ? 'on' : ''} ${open ? 'open' : ''}" data-id="${c.id}" ${lp ? `data-lp="${lp}" data-lpid="${c.id}" data-lpg="${type}|"` : ''} onclick="${tap}"><div class="ci" style="--cc:${c.color};background:${c.color}26">${c.icon}${cgNum(n)}</div><span>${esc(c.name)}</span></div>`;
+function cgTile(c, { on, open, n, tap, lp, type, mode, partial }) {
+  const selection = mode==='multi' ? `role="checkbox" aria-label="${esc(c.name)}" aria-checked="${partial?'mixed':!!on}" tabindex="0" onkeydown="if(event.key===' '||event.key==='Enter'){event.preventDefault();this.click()}"` : '';
+  return `<div class="cg-i ${on ? 'on' : ''} ${open ? 'open' : ''} ${partial ? 'partial' : ''}" data-id="${c.id}" ${selection} ${lp ? `data-lp="${lp}" data-lpid="${c.id}" data-lpg="${type}|"` : ''} onclick="${tap}"><i class="cg-check" aria-hidden="true">${partial?'−':'✓'}</i><div class="ci" style="--cc:${c.color};background:${c.color}26">${c.icon}${cgNum(n)}</div><span>${esc(c.name)}</span></div>`;
 }
 /** 二级分类的小标签 */
 function cgChip(s, { on, n, tap, lp, type }) {
@@ -54,7 +55,7 @@ function catGridHtml(key) {
   if (!list.some(t => t.id === st.open)) st.open = (list.find(t => sel.some(id => inCat(id, t.id))) || list[0] || {}).id || '';
   const lp = st.noLp ? '' : st.mode === 'manage' ? 'cat' : 'catpick';
   const grid = list.map(t => cgTile(t, { on: st.mode !== 'manage' && sel.some(id => inCat(id, t.id)), open: t.id === st.open,
-    n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type })).join('');
+    n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type, mode: st.mode, partial: st.mode==='multi' && !sel.includes(t.id) && sel.some(id=>inCat(id,t.id)) })).join('');
   const top = list.find(t => t.id === st.open);
   let sub = '';
   if (top) {

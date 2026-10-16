@@ -4,6 +4,7 @@
  */
 (function (root) {
   const PLATFORMS = {
+    chaohe: ['超盒算', {'超盒算':20}],
     pdd: ['拼多多', {
       '拼多多': 6, '再次拼单': 5, '拼单': 3, '待分享': 4, '拼过': 3, '百亿补贴': 2, '钱款去向': 3,
       '先用后付': 2, '多多': 1, '免运费': 1, '砍价': 2, '打包中': 2,
@@ -25,14 +26,15 @@
   const STATUS_RULES = [
     ['refund', ['退款成功', '退款完成', '已退款', '退款已到账', '退货退款成功', '已全额退款']],
     ['refund_pending', ['退款中', '退款处理中', '退款待处理', '退货中']],
-    ['closed', ['交易关闭', '已取消', '订单已取消', '待付款', '未付款', '已关闭']],
-    ['paid', ['交易成功', '交易完成', '订单完成', '已完成', '已签收', '已使用', '待使用', '待收货', '待发货', '已发货', '待评价', '拼单成功',
-      '待分享', '打包中', '运输中', '派送中', '买家已付款', '卖家已发货']],
+    ['closed', ['交易关闭', '已取消', '订单已取消', '待付款', '未付款', '已关闭', '充值失败']],
+    ['paid', ['充值成功', '交易成功', '交易完成', '订单完成', '已完成', '已签收', '已使用', '待使用', '待收货', '待发货', '已发货', '待评价', '拼单成功',
+      '待取货', '待分享', '打包中', '运输中', '派送中', '买家已付款', '卖家已发货']],
   ];
   const STATUS_EXACT = { '完成': 'paid', '成功': 'paid' };
+  const SIGNED_PENDING_RE = /^已签收[，,、·\s]*待确认收货$/;
   const PIN_RE = /拼过\s*\d+\s*次/;
   const TAB_WORDS = new Set(['全部', '待付款', '待支付', '待分享', '打包中', '待收货', '待收货/使用', '待使用', '评价', '待发货',
-    '待评价', '退款/售后', '售后', '已完成']);
+    '待取货', '待评价', '退款/售后', '售后', '已完成']);
   const SHOP_PREFIXES = ['淘宝', '天猫', 'JD', '京东 '];
   const STATUS_PRIORITY = ['refund', 'refund_pending', 'paid', 'closed'];
   const BUTTON_WORDS = ['更多', '申请退款', '追加评价', '再次拼单', '删除订单', '售后详情', '钱款去向', '发票详情',
@@ -79,6 +81,7 @@
 
   function classifyStatus(text) {
     const t = text.trim();
+    if(SIGNED_PENDING_RE.test(t))return ['paid',t];
     for (const [kind, words] of STATUS_RULES) for (const w of words) if (t.includes(w)) return [kind, w];
     if (STATUS_EXACT[t]) return [STATUS_EXACT[t], t];
     const m = t.match(PIN_RE);
@@ -134,6 +137,32 @@
   }
 
   const yRange = card => [Math.trunc(Math.min(...card.map(l => l.box[1]))), Math.trunc(Math.max(...card.map(l => l.box[3])))];
+  const SERVICE_RE = /无理由|价保|退货宝|退货运费|运费险|公益捐赠|发货清单|申请开票|正品保障|超值换购/;
+  function goodsDetails(card, width) {
+    const rows=[...card].sort(byY),pays=rows.filter(l=>hasPay(nos(l.text))).map(yc),bottom=pays.length?Math.min(...pays):Infinity;
+    const body=rows.filter(l=>yc(l)<bottom),anchors=[];
+    for(const line of body) {
+      const text=line.text.trim();let price=text.match(/[¥￥]\s*(\d+(?:\.\d{1,2})?)\s*$/);
+      if(!price&&line.box[0]>=width*.7)price=text.match(/^(\d+(?:\.\d{1,2})?)$/);
+      if(!price||line.box[2]<width*.8)continue;
+      let title=text.slice(0,price.index).trim(),titleLine=line;
+      if(!title) {
+        const candidates=body.filter(l=>l.box[0]>=width*.26&&l.box[0]<width*.72&&Math.abs(yc(l)-yc(line))<=Math.max(hh(l),hh(line))*1.2
+          &&clen(l.text.trim())>=2&&!isButton(l.text)&&!SERVICE_RE.test(l.text)&&!MONEY_RE.test(l.text)&&!QTY_RE.test(l.text.trim()));
+        if(!candidates.length)continue;
+        titleLine=candidates.sort((a,b)=>Math.abs(yc(a)-yc(line))-Math.abs(yc(b)-yc(line)))[0];title=titleLine.text.trim();
+      }
+      if(titleLine.box[0]<width*.26||isButton(title)||SERVICE_RE.test(title))continue;
+      if(anchors.length&&Math.abs(yc(titleLine)-anchors[anchors.length-1].y)<hh(titleLine)*.7)continue;
+      anchors.push({y:yc(titleLine),line:titleLine,title,price:parseFloat(price[1])});
+    }
+    return anchors.map((a,i)=>{
+      const end=anchors[i+1]?.y??bottom,within=body.filter(l=>yc(l)>a.y+hh(a.line)*.5&&yc(l)<end-hh(a.line)*.5);
+      const q=within.filter(l=>l.box[0]>=width*.7).map(l=>nos(l.text).match(QTY_RE)).find(Boolean),specs=[];
+      for(const l of within){const text=l.text.trim();if(Math.abs(l.box[0]-a.line.box[0])>width*.06||isButton(text)||SERVICE_RE.test(text)||MONEY_RE.test(text)||QTY_RE.test(nos(text))||DT_RE.test(text)||classifyStatus(text)[0])continue;if(text&&!specs.includes(text))specs.push(text);}
+      return {title:a.title,spec:specs.join('；'),qty:q?parseInt(q[1],10):null,list_price:a.price};
+    });
+  }
 
   function parseCard(card, group, width) {
     const anchor = group[0];
@@ -164,7 +193,8 @@
         if (titleLines.length >= 2) break;
       } else break;
     }
-    const title = titleLines.map(l => l.text.trim()).join('');
+    const items=goodsDetails(body,width);
+    const title = items.length ? items.map(it=>it.title).join(' / ') : titleLines.map(l => l.text.trim()).join('');
 
     let listPrice = null, qty = null;
     for (const l of body) {
@@ -189,9 +219,17 @@
     }
     if (amount === null) conf = 'none';
     return {
-      kind: KIND[statusKind] || 'unknown', status: statusText, shop, title, amount,
+      kind: KIND[statusKind] || 'unknown', status: statusText, shop, title, items, amount,
       amount_from: amountKey, list_price: listPrice, qty, time: when, confidence: conf, y_range: yRange(card),
     };
+  }
+
+  function parseChaoheCard(card, record, width) {
+    const prices=card.filter(l=>l.box[0]>width*.7).map(l=>nos(l.text).match(MONEY_FULL)).filter(Boolean);
+    const qty=card.map(l=>l.text.match(/共\s*(\d{1,3})\s*件/)).find(Boolean);
+    return {...record,shop:'超盒算',title:'',items:[],list_price:null,qty:qty?parseInt(qty[1],10):null,
+      amount:prices.length===1?parseFloat(prices[0][1]):null,amount_from:prices.length===1?'订单总额':null,
+      confidence:prices.length===1?(qty&&record.time?'high':'low'):'none'};
   }
 
   function splitByPayLines(lines, width) {
@@ -209,7 +247,7 @@
         && !MONEY_RE.test(l.text) && !hasPay(l.text)).sort(byY);
       orders.push({
         kind: KIND[statusKind] || 'unknown', status: statusText || '未识别状态', shop: '',
-        title: texts.length ? texts[0].text.trim() : '', amount, amount_from: key, list_price: null, qty: null, time: null,
+        title: texts.length ? texts[0].text.trim() : '', items:goodsDetails(card,width), amount, amount_from: key, list_price: null, qty: null, time: null,
         confidence: statusKind ? conf : 'low', y_range: yRange(card), complete: true,
       });
     }
@@ -243,13 +281,15 @@
     lines = splitMergedStatus(lines.filter(l => l.text.trim()), width);
     const platform = detectPlatform(lines);
     const anchors = lines.filter(l => classifyStatus(l.text)[0] && l.box[0] >= width * 0.45
-      && (clen(l.text.trim()) <= 8 || statusWithAmount(l.text)) && !isTabRow(l, lines)).sort(byY);
+      && (clen(l.text.trim()) <= 8 || SIGNED_PENDING_RE.test(l.text.trim()) || statusWithAmount(l.text)) && !isTabRow(l, lines)).sort(byY);
 
     const payYs = lines.filter(l => hasPay(nos(l.text))).map(yc);
     const groups = [];
     for (const a of anchors) {
       const last = groups[groups.length - 1];
-      if (last && payYs.length && !payYs.some(y => yc(last[0]) < y && y < yc(a))) last.push(a);
+      const newShop=lines.some(l=>l!==a&&l.box[0]<width*.45&&l.box[2]<=a.box[0]+5&&sameRow(l,a)
+        &&!classifyStatus(l.text)[0]&&!isButton(l.text)&&!MONEY_RE.test(l.text)&&/[>〉›]$|店$|鞋业$|鞋柜$/.test(l.text.trim()));
+      if (last && payYs.length && !newShop && !payYs.some(y => yc(last[0]) < y && y < yc(a))) last.push(a);
       else groups.push([a]);
     }
 
@@ -257,12 +297,13 @@
       const a = g[0], nxt = groups[i + 1] ? groups[i + 1][0] : null;
       const top = a.box[1] - hh(a) * 0.5, bottom = nxt ? nxt.box[1] - hh(nxt) * 0.5 : height + 1;
       const card = lines.filter(l => top <= yc(l) && yc(l) < bottom);
-      const rec = parseCard(card, g, width);
-      if (payYs.length && !PAY_KEYS.includes(rec.amount_from)) { rec.amount = null; rec.confidence = 'none'; }
+      let rec = parseCard(card, g, width);
+      if(platform.key==='chaohe')rec=parseChaoheCard(card,rec,width);
+      if (platform.key!=='chaohe' && payYs.length && !PAY_KEYS.includes(rec.amount_from)) { rec.amount = null; rec.confidence = 'none'; }
       rec.complete = rec.amount !== null;
       return rec;
     });
-    if (!orders.some(o => o.complete)) orders = splitByPayLines(lines, width);
+    if (platform.key!=='chaohe' && !orders.some(o => o.complete)) orders = splitByPayLines(lines, width);
 
     const usable = orders.filter(o => o.complete);
     return {

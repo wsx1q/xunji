@@ -83,23 +83,23 @@ const HomeW = {
 
 /* ================= 首页看板设置 ================= */
 Pages.dash = () => {
-  const h = S.settings.home, n = h.widgets.length, bn = h.boards.length;
+  const h = S.settings.home;
   const unused = Object.keys(BOARDS).filter(k => !h.boards.some(b => b.id === k));
   return hdr('首页看板', `<a onclick="editBoard()" style="font-size:22px">＋</a>`) + `
-  <div class="sec-t">首页时间看板</div>
+  <div class="sec-t">首页时间看板 <small>长按拖动排序</small></div>
   <div class="card">${h.boards.map((b, i) => {
     const o = boardOf(b);
-    return `<div class="dw"><em class="rm" onclick="rmBoard(${i})">−</em><div class="pic pic-${o.cls}">${o.icon}</div>
+    return `<div class="dw" data-lp="homeboard" data-lpid="${esc(b.id)}"><em class="rm" onclick="rmBoard(${i})">−</em><div class="pic pic-${o.cls}">${o.icon}</div>
       <span ${b.custom ? `onclick="editBoard('${b.id}')"` : ''}>${esc(o.name)}${b.custom ? ' <u>编辑</u>' : ''}<small>${esc(o.sub)}</small></span>
-      <b class="mv ${i ? '' : 'dis'}" onclick="moveB(${i},-1)">↑</b><b class="mv ${i < bn - 1 ? '' : 'dis'}" onclick="moveB(${i},1)">↓</b></div>`;
+      <span class="home-drag-handle" aria-hidden="true">⠿</span></div>`;
   }).join('') || empty('首页没有时间看板，从下方添加', '🗓️')}</div>
   <div class="sec-t">可添加看板</div>
   <div class="card">${unused.map(k => { const o = boardOf({ id: k }); return `<div class="dw" onclick="S.settings.home.boards.push({id:'${k}'});save();render()"><em class="ad">＋</em><div class="pic pic-${o.cls}">${o.icon}</div><span>${o.name}<small>${o.sub}</small></span></div>`; }).join('')}
     <div class="dw" onclick="editBoard()"><em class="ad">＋</em><div class="pic pic-custom">⏱</div><span>自定义看板<small>按类型、时间、分类、账户、金额、成员、备注统计</small></span></div></div>
   <div class="sec-t">其他模块 <a onclick="askConfirm('恢复默认的首页看板布局？',()=>{S.settings.home=defaultHome();save();render()})">恢复默认</a></div>
-  <div class="card"><div class="card-hd"><b>首页模块</b><small>开关控制显示，箭头调整顺序</small></div>
-    ${h.widgets.map((w, i) => `<div class="dw"><i>${WIDGETS[w.id][0]}</i><span>${WIDGETS[w.id][1]}</span>
-      <b class="mv ${i ? '' : 'dis'}" onclick="moveW(${i},-1)">↑</b><b class="mv ${i < n - 1 ? '' : 'dis'}" onclick="moveW(${i},1)">↓</b>
+  <div class="card"><div class="card-hd"><b>首页模块</b><small>开关控制显示，长按拖动排序</small></div>
+    ${h.widgets.map((w, i) => `<div class="dw" data-lp="homewidget" data-lpid="${esc(w.id)}"><i>${WIDGETS[w.id][0]}</i><span>${WIDGETS[w.id][1]}</span>
+      <span class="home-drag-handle" aria-hidden="true">⠿</span>
       <em class="sw ${w.on ? 'on' : ''}" onclick="S.settings.home.widgets[${i}].on=!S.settings.home.widgets[${i}].on;save();render()"></em></div>`).join('')}</div>
   <div class="card"><div class="card-hd"><b>快捷入口</b><small>按点选顺序排列 · 已选 ${h.quick.length}/12</small></div>
     <div class="qsel">${Object.entries(QUICK).map(([k, [ic, nm]]) => `<i class="chip ${h.quick.includes(k) ? 'on' : ''}" onclick="toggleQ('${k}')">${ic} ${nm}${h.quick.includes(k) ? ' · ' + (h.quick.indexOf(k) + 1) : ''}</i>`).join('')}</div></div>
@@ -107,16 +107,6 @@ Pages.dash = () => {
     <div class="chips" style="padding-bottom:14px">${[3, 6, 10, 20].map(k => `<i class="chip ${h.recentN === k ? 'on' : ''}" onclick="S.settings.home.recentN=${k};save();render()">${k} 条</i>`).join('')}</div></div>
   <div class="ver">首页顶部的本月收支与预算环固定显示</div>`;
 };
-function moveW(i, dir) {
-  const w = S.settings.home.widgets, j = i + dir;
-  if (j < 0 || j >= w.length) return;
-  [w[i], w[j]] = [w[j], w[i]]; save(); render();
-}
-function moveB(i, dir) {
-  const b = S.settings.home.boards, j = i + dir;
-  if (j < 0 || j >= b.length) return;
-  [b[i], b[j]] = [b[j], b[i]]; save(); render();
-}
 function rmBoard(i) {
   const b = S.settings.home.boards[i];
   const done = () => { S.settings.home.boards.splice(i, 1); save(); render(); };

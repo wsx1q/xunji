@@ -76,7 +76,7 @@ Pages.add = () => {
         <i class="chip ${E.project ? 'set' : ''}" onclick="pickTag('project')">📁 ${esc(E.project || '项目')}</i>
         ${S.books.length > 1 ? `<i class="chip" onclick="pickTxBook()">📒 ${esc((S.books.find(b => b.id === E.bookId) || curBook()).name)}</i>` : ''}
       </div>
-      <input class="note" placeholder="添加备注..." value="${esc(E.note)}" oninput="E.note=this.value" maxlength="60">
+      <textarea class="note" placeholder="添加备注..." oninput="E.note=this.value" maxlength="${NOTE_MAX}" rows="2">${esc(E.note)}</textarea>
       <div class="keys">${keys.map(([k, l, c]) => k === 'acdel' ? `<div class="k2"><button class="k fn" onclick="key('ac')">AC</button><button class="k fn" onclick="key('del')">⌫</button></div>` : `<button class="k ${c || ''}" ${k === 'ok' ? 'id="kok"' : ''} onclick="${k === 'ok' ? 'saveTx(false)' : k === 'again' ? (E.editId ? 'back()' : 'saveTx(true)') : `key('${k}')`}">${l || k}</button>`).join('')}</div>
     </div></div>`;
 };

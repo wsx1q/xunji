@@ -35,6 +35,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class MainActivity extends Activity {
+    private static boolean processStarted;
+    private final long activityStartedAt = android.os.SystemClock.elapsedRealtime();
+    private boolean coldStart;
     private static final int REQ_FILE = 1001, REQ_DIR = 1002;
     static final String EXPORT_DIR = "XunJi";
     private WebView web;
@@ -54,6 +57,7 @@ public class MainActivity extends Activity {
     private String pendingMeta;
     private java.util.List<String> pendingParts;
     private boolean saveQueued;
+    private String lastSaveError = "";
 
     private void drainSave() {
         while (true) {
@@ -70,6 +74,9 @@ public class MainActivity extends Activity {
                 }
             }
             String err = store.saveParts(meta, list);
+            synchronized (saveLock) {
+                lastSaveError = err;
+            }
             if (!err.isEmpty()) {
                 final String m = err;
                 runOnUiThread(() -> web.evaluateJavascript("window.onSaveError && onSaveError(" + JSONObject.quote(m) + ")", null));
@@ -104,6 +111,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        coldStart = !processStarted;
+        processStarted = true;
         store = new SecureStore(this);
         registerReceiver(screenRx, new IntentFilter(Intent.ACTION_SCREEN_OFF));
         if (LocalOcr.available()) WebView.setWebContentsDebuggingEnabled(true);
@@ -387,10 +396,26 @@ public class MainActivity extends Activity {
             return BuildConfig.VERSION_NAME;
         }
 
-        /** 是否显示压力测试等开发用功能（只有测试版 ocr 为 true） */
+        /** 是否显示压力测试等开发用功能（OCR 版和本地 lite Beta 开启） */
         @JavascriptInterface
         public boolean testTools() {
             return BuildConfig.TEST_TOOLS;
+        }
+
+        /** 首次 Activity 从进程启动计时，重建则从本次 Activity 创建计时。 */
+        @JavascriptInterface
+        public String startupInfo() {
+            long start = coldStart ? android.os.Process.getStartElapsedRealtime() : activityStartedAt;
+            return "{\"cold\":" + coldStart + ",\"elapsedMs\":"
+                    + (android.os.SystemClock.elapsedRealtime() - start) + "}";
+        }
+
+        /** 不阻塞 WebView；只有后台压缩、加密和写盘返回后，saving 才会变成 false。 */
+        @JavascriptInterface
+        public String dbSaveStatus() {
+            synchronized (saveLock) {
+                return "{\"saving\":" + saveQueued + ",\"error\":" + JSONObject.quote(lastSaveError) + "}";
+            }
         }
 
         @JavascriptInterface

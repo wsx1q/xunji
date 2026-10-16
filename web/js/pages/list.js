@@ -135,7 +135,8 @@ function renderListBody(append) {
   const fm = lfActive().some(k => k !== 'time') ? boardMatch({ ...L.F, type: 'all' }) : null;
   const shown = [], ids = [];
   let inc = 0, exp = 0, tf = 0;
-  for (const t of bookTx()) {
+  // 先用二分定位时间范围，再做关键词和其他筛选，避免按月查看仍扫描整个账本。
+  for (const t of inRange(bookTx(), s, e)) {
     if (!matchListTx(t, s, e, q, fm)) continue;
     shown.push(t);
     ids.push(t.id);

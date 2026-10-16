@@ -4,6 +4,7 @@ plugins {
 
 def buildStamp = new Date().format('yyyyMMdd.HHmm')
 def buildCode = Integer.parseInt(new Date().format('yyMMddHH'))
+def liteBeta = project.hasProperty('liteBeta')
 
 android {
     namespace 'com.xunji.app'
@@ -23,9 +24,13 @@ android {
     productFlavors {
         lite {
             dimension 'edition'
-            resValue 'string', 'app_name', '洵记'
-            // 压力测试等开发用功能只在测试版（ocr）里显示
-            buildConfigField 'boolean', 'TEST_TOOLS', 'false'
+            resValue 'string', 'app_name', liteBeta ? '洵记Beta' : '洵记'
+            // 本地 Beta 开启原有开发工具；日常正式版仍关闭
+            buildConfigField 'boolean', 'TEST_TOOLS', liteBeta ? 'true' : 'false'
+            if (liteBeta) {
+                versionNameSuffix '-beta'
+                buildConfigField 'String', 'VERSION_NAME', "\"${buildStamp}-beta\""
+            }
         }
         ocr {
             dimension 'edition'

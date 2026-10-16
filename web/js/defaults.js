@@ -38,7 +38,7 @@ const WIDGETS = {
 };
 /* 识别导入只在 OCR 版里有：离线版（lite）的原生层报告本机 OCR 不可用，界面上就不出现任何识别入口 */
 const HAS_OCR = (() => { try { return !!(window.Android && Android.ocrLocalAvailable && Android.ocrLocalAvailable()); } catch (e) { return false; } })();
-/* 压力测试等开发用功能：测试版（ocr）和电脑浏览器调试时显示，正式版不显示 */
+/* 压力测试等开发用功能：OCR 版、本地 lite Beta 和电脑浏览器调试时显示，正式版不显示 */
 const TEST_TOOLS = (() => { try { return !window.Android || !!(Android.testTools && Android.testTools()); } catch (e) { return false; } })();
 const QUICK = {
   accounts: ['💳', '账户', "go('accounts')", '#FFF1EA'], budget: ['🎯', '预算', "go('budget')", '#FFF6E0'], report: ['📊', '报表', "tab('report')", '#EAF4FF'],

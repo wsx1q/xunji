@@ -12,6 +12,18 @@ function reorderBy(list, key, ids) {
   ids.forEach((k, j) => { if (j < pos.length) list[pos[j]] = map.get(k); });
 }
 const LP_KINDS = {
+  homeboard: {
+    sortOnly: true,
+    edit: () => toast('长按后拖动调整顺序'),
+    order: ids => reorderBy(S.settings.home.boards, b => b.id, ids),
+    rerender: true,
+  },
+  homewidget: {
+    sortOnly: true,
+    edit: () => toast('长按后拖动调整顺序'),
+    order: ids => reorderBy(S.settings.home.widgets, w => w.id, ids),
+    rerender: true,
+  },
   cat: {
     edit: (id, g) => { CT = g.split('|')[0]; editCat(id); },
     order: (ids, g) => reorderBy(S.categories[g.split('|')[0]], c => c.id, ids),

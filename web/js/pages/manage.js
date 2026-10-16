@@ -89,24 +89,15 @@ Pages.cats = () => {
   if(st.detail&&!S.categories[CT].some(c=>c.id===st.detail))st.detail='';
   st.sel=st.detail?[st.detail]:[];
   return hdr('分类管理', `<a onclick="editCat()">＋ 一级</a>`) + `<div style="text-align:center;padding:14px 0 0"><div class="seg light">${[['expense', '支出分类'], ['income', '收入分类']].map(([k, n]) => `<i class="${CT === k ? 'on' : ''}" onclick="CT='${k}';render()">${n}</i>`).join('')}</div></div>
-  ${st.detail?managedCategoryPreview(st.detail):''}
   <div class="card cg-card">${catGridHtml('manage')}</div>
   <div class="ver">点选分类查看流水；一级分类包含其二级分类。数字和明细统计全部账本，长按分类可编辑，长按后拖动排序</div>`;
 };
 function selectManagedCategory(id) {
   const c=S.categories[CT].find(c=>c.id===id);if(!c)return;
   const st=CGS.manage;st.detail=id;st.open=c.pid||id;render();
-  requestAnimationFrame(()=>$('#catLedger')?.scrollIntoView({block:'start'}));
+  openCategoryLedger(id);
 }
 function openCategoryLedger(id) {openLedgerDetails({scope:'allBooks',type:CT,cat:id});}
-function managedCategoryPreview(id) {
-  const c=catById(id),recent=[];let n=0,total=0;ensureTxnOrder();
-  for(const t of S.txns)if(t.type===CT&&inCat(t.catId,id)){n++;total+=t.amount;if(recent.length<5)recent.push(t);}
-  return `<section class="card cat-ledger" id="catLedger"><div class="card-hd"><b>${c.icon} ${esc(catLabel(id))} · 流水详情</b><a onclick="editCat('${id}')">编辑分类</a></div>
-    <div class="ledger-context">全部账本 · 全部时间${c.pid?'':' · 包含二级分类'}</div><div class="cat-ledger-total">共 ${n} 笔 · ${CT==='expense'?'支出':'收入'} ${money(r2(total))}</div>
-    <button class="btn ghost" onclick="openCategoryLedger('${id}')">查看全部 ${n} 笔流水 ›</button>
-    ${recent.length?recent.map(t=>txItem(t,{date:true,book:true})).join(''):empty('这个分类还没有流水')}</section>`;
-}
 function openBookLedger(id){switchBook(id);openLedgerDetails();}
 /* 从筛选面板长按进来编辑：保存 / 删除 / 合并后回到筛选面板 */
 let _catReturn = null;

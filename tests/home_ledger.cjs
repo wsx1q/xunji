@@ -62,11 +62,11 @@ const sorted=a=>[...a].sort();
    await home();await card('资产概览').locator('.sum3>div').nth(2).click();await ids(['e2','e4','previous','other','transfer','old']);
    if(name==='desktop'){await home();await p.locator('.metric-assets').click();assert.equal(await p.evaluate(()=>L.scope),'allBooks');}
    await p.evaluate(()=>{CT='expense';go('cats');});await p.locator('.cg-i[data-id=food]').click();
-   await p.getByText('餐饮 · 流水详情',{exact:false}).waitFor();assert.match(await p.locator('.cat-ledger-total').innerText(),/共 5 笔.*222.00/);
-   await p.locator('#catLedger .btn').click();await ids(['e1','e2','previous','other','old']);
-   await p.evaluate(()=>go('cats'));await p.locator('.cg-sub [data-v=rice]').click();
-   assert.match(await p.locator('.cat-ledger-total').innerText(),/共 4 笔.*220.00/);
-   await p.locator('#catLedger .btn').click();await ids(['e1','e2','previous','other']);
+   await ids(['e1','e2','previous','other','old']);
+   assert.equal(await p.evaluate(()=>stack[stack.length-1].name),'list');
+   assert.equal(await p.locator('#catLedger').count(),0);
+   await p.evaluate(()=>back());assert.equal(await p.evaluate(()=>stack[stack.length-1].name),'cats');
+   await p.locator('.cg-sub [data-v=rice]').click();await ids(['e1','e2','previous','other']);
    await p.evaluate(()=>manageTags('project'));await p.locator('#sheet .opt').filter({hasText:'项目A'}).getByText('查看流水',{exact:true}).click();await ids(['e1','e2','other']);
    await p.evaluate(()=>manageTags('merchant'));await p.locator('#sheet .opt').filter({hasText:'店铺甲'}).getByText('查看流水',{exact:true}).click();await ids(['e1','e2','other']);
    await p.evaluate(()=>manageMembers());await p.locator('#sheet .opt').filter({hasText:`甲'"成员`}).getByText('查看流水',{exact:true}).click();await ids(['e1','e2','other']);

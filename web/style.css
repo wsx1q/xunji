@@ -504,9 +504,12 @@ i{font-style:normal}
 .qh-list{padding-top:6px;gap:12px 14px}
 .qh-list .chip{overflow:visible}
 .qh-list .chip span{max-width:8em;overflow:hidden;text-overflow:ellipsis}
-/* 右上角的小 ✕：单独删除这个关键词（点的范围比看到的大一圈） */
-.qh-x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:#C9CDD4;color:#fff;font-size:9px;font-weight:400;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px #fff}
-.qh-x::before{content:"";position:absolute;inset:-8px}
+/* 标签内部细叉：点击区与标签选择区分开，不悬浮或叠盖文字。 */
+.qh-x{position:relative;flex:none;width:32px;height:34px;margin-right:3px;border:0;padding:0;border-radius:50%;background:none;color:#98A0AA;font-size:0;display:grid;place-items:center;box-shadow:none;cursor:pointer}
+.qh-x::before,.qh-x::after{content:"";position:absolute;width:12px;height:1.3px;left:50%;top:50%;background:currentColor;border-radius:1px;transform:translate(-50%,-50%) rotate(45deg);pointer-events:none}
+.qh-x::after{transform:translate(-50%,-50%) rotate(-45deg)}
+.qh-x:hover{color:#C66D48;background:#FFF0E8}.qh-x:active{background:#FFE4D6}
+@media(pointer:coarse){.history-item .qh-x{width:44px;height:44px}}
 /* 记录笔数：分类、成员 / 商家 / 项目、账本处处同一个样子，只显示数字 */
 .opt .cnt,.bk-i .cnt{font-style:normal;font-size:11.5px;font-weight:400;color:var(--t2);background:#F2F3F5;border-radius:9px;padding:1px 7px;margin-left:6px;vertical-align:1px}
 .bk-ed{font-style:normal}
@@ -559,4 +562,4 @@ textarea.note{height:50px;min-height:36px;max-height:120px;resize:vertical;paddi
 
 .cat-ledger-actions{display:flex;gap:10px;padding:10px 14px;position:sticky;top:54px;z-index:6}.cat-ledger-actions .btn{margin:0;flex:1}.cat-ledger-actions .btn.ghost{flex:0 0 70px}.cat-ledger-actions .btn:disabled{opacity:.4;cursor:default}
 
-.subrow.is-recent{display:block}.history-clear{border:0;background:none;color:var(--t2);font-size:12px;padding:0;cursor:pointer}.history-item{position:relative;padding:0!important}.history-use{display:block;border:0;background:none;color:inherit;font:inherit;padding:7px 12px;cursor:pointer;text-align:left;max-width:100%}.history-use span{display:block;white-space:nowrap}.qh-x{border:0;padding:0;cursor:pointer}.recent-chips{max-height:96px;overflow-y:auto;overscroll-behavior:contain;padding:8px 8px 8px 0}.recent-chips .history-item{max-width:calc(100% - 8px)}.recent-chips .history-use span{max-width:14em}.recent-chips .history-item.on{background:#FFEDE5;border:1px solid #FFD2C0}
+.subrow.is-recent{display:block}.history-clear{border:0;background:none;color:var(--t2);font-size:12px;padding:0;cursor:pointer}.history-item{position:relative;display:inline-flex;align-items:center;padding:0!important}.history-use{display:block;border:0;background:none;color:inherit;font:inherit;padding:9px 4px 9px 12px;cursor:pointer;text-align:left;max-width:100%;min-width:0}.history-use span{display:block;white-space:nowrap}.qh-x{border:0;padding:0;cursor:pointer}.recent-chips{max-height:96px;overflow-y:auto;overscroll-behavior:contain;padding:8px 8px 8px 0}.recent-chips .history-item{max-width:calc(100% - 8px)}.recent-chips .history-use span{max-width:14em}.recent-chips .history-item.on{background:#FFEDE5;border:1px solid #FFD2C0}

@@ -190,6 +190,14 @@ function recentCats(type) {
   const ids = (S.settings.recentCats && S.settings.recentCats[type]) || [];
   return ids.filter(id => S.categories[type] && S.categories[type].some(c => c.id === id));
 }
+/** Only clears recent category shortcuts; keeps the draft, records and last-used defaults. */
+function clearRecentCats(type, redraw) {
+  if(type!=='expense'&&type!=='income')return;
+  S.settings.recentCats ||= {expense:[],income:[]};
+  S.settings.recentCats[type]=[];
+  if(typeof E!=='undefined'&&E?.type===type)E.recentOn=false;
+  save();(redraw||render)();toast('已清空最近使用，账目和当前填写内容已保留');
+}
 function defaultCatId(type) {
   const last = (S.settings.last || {})[type];
   if (last && last.catId && catById(last.catId) !== UNKNOWN && S.categories[type].some(c => c.id === last.catId)) return last.catId;

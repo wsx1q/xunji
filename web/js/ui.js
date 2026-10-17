@@ -199,7 +199,7 @@ function catSheet(title, type, cur, cb) {
 function catSheetRender() {
   const st = CGS.single, rec = recentCats(st.type);
   _catPickReopen = catSheetRender;
-  openSheet(st.title, (rec.length ? `<label>最近使用</label><div class="chips" style="flex-wrap:wrap;padding-bottom:4px">${rec.map(id => `<i class="chip ${st.sel.includes(id) ? 'on' : ''}" onclick="sheetPick('${id}')">${catById(id).icon} ${esc(catLabel(id))}</i>`).join('')}</div>` : '')
+  openSheet(st.title, (rec.length ? `<div class="recent-head"><label>最近使用</label><button type="button" class="recent-clear" onclick="clearRecentCats(CGS.single.type,catSheetRender)">清空</button></div><div class="recent-chips" style="padding-bottom:4px">${rec.map(id => `<i class="chip ${st.sel.includes(id) ? 'on' : ''}" onclick="sheetPick('${id}')">${catById(id).icon} ${esc(catLabel(id))}</i>`).join('')}</div>` : '')
     + `<div class="cg-box">${catGridHtml('single')}</div>`);
 }
 function ringSvg(pct, bg, fg, size = 92, sw = 8) {

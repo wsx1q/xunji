@@ -558,3 +558,5 @@ textarea.note{height:50px;min-height:36px;max-height:120px;resize:vertical;paddi
 .ledger-context{font-size:12px;line-height:1.6;color:var(--t2);padding:8px 16px;background:#FFF8F3}.ledger-link{flex:none;border:1px solid #FFD2C0;background:#FFF4ED;border-radius:7px;padding:7px 9px;font-size:12px;color:#B84C25;cursor:pointer}.home-hd [onclick],.home-w [onclick],.chart [role=button]{cursor:pointer}
 
 .cat-ledger-actions{display:flex;gap:10px;padding:10px 14px;position:sticky;top:54px;z-index:6}.cat-ledger-actions .btn{margin:0;flex:1}.cat-ledger-actions .btn.ghost{flex:0 0 70px}.cat-ledger-actions .btn:disabled{opacity:.4;cursor:default}
+
+.subrow.is-recent{display:block}.recent-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}.recent-head label{margin:0}.recent-clear{flex:none;padding:4px 10px;border:1px solid #FFD2C0;border-radius:8px;color:#B84C25;background:#FFF4ED;font-size:12px;cursor:pointer}.recent-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px;max-height:96px;overflow-y:auto;overscroll-behavior:contain}.recent-chips .chip{max-width:100%;white-space:normal;overflow-wrap:anywhere}

@@ -124,12 +124,8 @@ function renderSubRow() {
   el.classList.toggle('is-recent',!!E.recentOn&&E.type!=='transfer');
   if (E.type === 'transfer') { el.style.display = 'none'; return; }
   if (E.recentOn) {
-    const rec = recentCats(E.type);
     el.style.display = '';
-    el.innerHTML = `<div class="recent-head"><small>最近使用</small><button type="button" class="recent-clear" onclick="clearRecentCats(E.type)">清空</button></div><div class="recent-chips">` + rec.map(id => {
-      const c = catById(id), top = topOf(id);
-      return `<i class="chip ${id === E.catId ? 'on' : ''}" onclick="E.catId='${id}';updCat();renderSubRow()">${c.icon} ${esc(c.name)}<em class="sub-p">${esc(top.name)}</em></i>`;
-    }).join('')+'</div>';
+    el.innerHTML = recentCategoryHistory(E.type,[E.catId],'E.catId=this.parentNode.dataset.v;updCat();renderSubRow()');
     return;
   }
   const top = topOf(E.catId), subs = top ? subsOf(top.id) : [];

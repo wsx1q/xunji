@@ -189,6 +189,18 @@ function memberSheet(cur, cb) {
   _pickReopen = () => memberSheet(cur, cb);
   openSheet('选择成员', tagRows('member', S.members.length ? S.members : ['本人'], m => m === cur, 'sheetPick(this.dataset.v)', '', true));
 }
+/** Shared search/recent-history controls: select, remove one, or clear all. */
+function historyChips(title, items, actions, bounded=false) {
+  if(!items.length)return '';
+  return `<div class="qh-hd"><span>${esc(title)}</span><button type="button" class="history-clear" onpointerdown="event.preventDefault()" onclick="${esc(actions.clear)}">清除</button></div>
+    <div class="qh-list ${bounded?'recent-chips':''}">${items.map(it=>`<div class="chip history-item ${it.on?'on':''}" data-v="${esc(it.value)}"><button type="button" class="history-use" title="${esc(it.title||it.label)}" onpointerdown="event.preventDefault()" onclick="${esc(actions.use)}"><span>${esc(it.label)}</span></button><button type="button" class="qh-x" aria-label="移除${esc(it.title||it.label)}" onpointerdown="event.preventDefault()" onclick="event.stopPropagation();${esc(actions.remove)}">✕</button></div>`).join('')}</div>`;
+}
+function recentCategoryHistory(type, selected, use, redraw='') {
+  const next=redraw?','+redraw:'';
+  return historyChips('最近使用',recentCats(type).map(id=>({value:id,label:catById(id).icon+' '+catLabel(id),on:selected.includes(id)})),{
+    use,remove:`removeRecentCat('${type}',this.parentNode.dataset.v${next})`,clear:`clearRecentCats('${type}'${next})`
+  },true);
+}
 /** 选一个分类（导入账单 / 识别订单的分类、分类预算）：最近使用 + 分类网格，短按选择，长按编辑 */
 function catSheet(title, type, cur, cb) {
   _sheetCb = cb;
@@ -197,9 +209,9 @@ function catSheet(title, type, cur, cb) {
   catSheetRender();
 }
 function catSheetRender() {
-  const st = CGS.single, rec = recentCats(st.type);
+  const st = CGS.single;
   _catPickReopen = catSheetRender;
-  openSheet(st.title, (rec.length ? `<div class="recent-head"><label>最近使用</label><button type="button" class="recent-clear" onclick="clearRecentCats(CGS.single.type,catSheetRender)">清空</button></div><div class="recent-chips" style="padding-bottom:4px">${rec.map(id => `<i class="chip ${st.sel.includes(id) ? 'on' : ''}" onclick="sheetPick('${id}')">${catById(id).icon} ${esc(catLabel(id))}</i>`).join('')}</div>` : '')
+  openSheet(st.title, recentCategoryHistory(st.type,st.sel,'sheetPick(this.parentNode.dataset.v)','catSheetRender')
     + `<div class="cg-box">${catGridHtml('single')}</div>`);
 }
 function ringSvg(pct, bg, fg, size = 92, sw = 8) {

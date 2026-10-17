@@ -198,6 +198,13 @@ function clearRecentCats(type, redraw) {
   if(typeof E!=='undefined'&&E?.type===type)E.recentOn=false;
   save();(redraw||render)();toast('已清空最近使用，账目和当前填写内容已保留');
 }
+function removeRecentCat(type, id, redraw) {
+  if(type!=='expense'&&type!=='income')return;
+  const list=S.settings.recentCats?.[type];if(!Array.isArray(list))return;
+  S.settings.recentCats[type]=list.filter(v=>v!==id);
+  if(typeof E!=='undefined'&&E?.type===type&&!recentCats(type).length)E.recentOn=false;
+  save();(redraw||render)();
+}
 function defaultCatId(type) {
   const last = (S.settings.last || {})[type];
   if (last && last.catId && catById(last.catId) !== UNKNOWN && S.categories[type].some(c => c.id === last.catId)) return last.catId;

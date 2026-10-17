@@ -29,8 +29,9 @@ function qHistShow(on) {
   const list = qHist();
   if (!on || !list.length || (q && q.value.trim()) || document.activeElement !== q) { box.innerHTML = ''; return; }
   // 按下时 preventDefault，搜索框不会先失去焦点把列表收起来
-  box.innerHTML = `<div class="qh-hd"><span>最近搜索</span><a onpointerdown="event.preventDefault()" onclick="S.settings.searchHist=[];save();qHistShow(false)">清除</a></div>
-    <div class="qh-list">${list.map(v => `<i class="chip" data-v="${esc(v)}" onpointerdown="event.preventDefault()" onclick="qHistUse(this.dataset.v)"><span>${esc(v)}</span><b class="qh-x" onclick="event.stopPropagation();qHistDel(this.parentNode.dataset.v)">✕</b></i>`).join('')}</div>`;
+  box.innerHTML = historyChips('最近搜索',list.map(v=>({value:v,label:v})),{
+    use:'qHistUse(this.parentNode.dataset.v)',remove:'qHistDel(this.parentNode.dataset.v)',clear:'S.settings.searchHist=[];save();qHistShow(false)'
+  });
 }
 /** 删掉一个历史关键词（右上角 ✕），列表留着继续选 */
 function qHistDel(v) {

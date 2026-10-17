@@ -80,7 +80,14 @@ const subsOf = id => id ? S.categories.expense.concat(S.categories.income).filte
 const inCat = (catId, id) => catId === id || (!!catId && catById(catId).pid === id);
 const accById = id => S.accounts.find(a => a.id === id);
 const accName = id => (accById(id) || { name: '未知账户' }).name;
-const accIcon = a => (ACC_TYPES[a.type] || ACC_TYPES.cash).icon;
+const accIcon = a => (ACC_TYPES[a.type] || ACC_TYPES.other).icon;
+const accTypeName = a => (ACC_TYPES[a.type]||ACC_TYPES.other).name;
+function accountGroup(a, bal=balances()) {
+  if(a.type==='credit')return 'payable';
+  if(a.type==='debt'&&['receivable','payable'].includes(a.debtSide))return a.debtSide;
+  if(a.type==='debt')return (accSum(a.id,bal)<0||(/应付|欠款|借入|贷款/.test(a.name)&&accSum(a.id,bal)===0))?'payable':'receivable';
+  return Object.keys(ACC_TYPES).includes(a.type)?a.type:'other';
+}
 // 二级账户：子账户 pid 指向上级（只有两级）；上级的合计 = 自身余额 + 各子账户余额
 const accKids = id => S.accounts.filter(a => a.pid === id);
 const accTops = () => S.accounts.filter(a => !a.pid || !accById(a.pid));

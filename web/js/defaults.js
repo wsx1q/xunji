@@ -122,9 +122,11 @@ function boardOf(b) {
   return { name: B.name, icon: typeof B.icon === 'function' ? B.icon() : B.icon, cls: B.cls, s, e, sub, open: B.open, match: () => true };
 }
 const ACC_TYPES = {
-  cash: { name: '现金', icon: '💵' }, debit: { name: '储蓄卡', icon: '🏦' }, credit: { name: '信用卡', icon: '💳' },
-  online: { name: '网络账户', icon: '📲' }, invest: { name: '投资理财', icon: '📈' }, debt: { name: '应收应付', icon: '🤝' }
+  cash:{name:'现金',icon:'💵'}, debit:{name:'银行卡',icon:'🏦'}, online:{name:'微信／支付宝',icon:'📲'},
+  invest:{name:'投资理财',icon:'📈'}, receivable:{name:'应收款',icon:'🤝'}, payable:{name:'应付款',icon:'💳'}, other:{name:'其他资产／负债',icon:'📦'}
 };
+// Read compatibility for old backups/importers; new account choices use the seven groups above.
+Object.defineProperties(ACC_TYPES,{credit:{value:{name:'信用卡',icon:'💳'}},debt:{value:{name:'应收应付（旧账户）',icon:'🤝'}}});
 const EMOJIS = '🍚🍜🍔🍕🍰🧋☕🍺🍎🥬🛒🛍️👕👟💄🧴🏠💡💧🔥📱💻🎮🎬🎤🎵📚✏️🎓🚇🚌🚕🚗⛽✈️🏨🏃⚽🏸💊🏥🐱🐶👶🎁🧧💰💼📈🏆🧾↩️💳🔧🧹🌹🚬🎂📦'.match(/\p{Extended_Pictographic}\uFE0F?/gu);
 const COLORS = ['#FF8A65', '#FFB74D', '#FFCA28', '#9CCC65', '#4DB6AC', '#4FC3F7', '#64B5F6', '#7986CB', '#BA68C8', '#F06292', '#E57373', '#A1887F', '#90A4AE', '#BDBDBD'];
 const BOOK_ICONS = ['📒', '🏠', '✈️', '💼', '🎓', '🚗', '👶', '🎉', '💒', '🏪'];
@@ -147,10 +149,10 @@ function initData(demo) {
     books: [{ id: bookId, name: '日常账本', icon: '📒' }],
     curBook: bookId,
     categories: { expense: DEFAULT_EXP.map(mk), income: DEFAULT_INC.map(mk) },
-    // 真实使用从一个余额为 0 的「现金」开始；示例数据才带一组有余额的账户（seed 按名字找它们）
+    // 新账本建立七类零余额账户；示例账户名称保留供 seed 使用。
     accounts: demo
       ? [acc('现金', 'cash', 1500), acc('招商银行', 'debit', 28000), acc('支付宝', 'online', 3000), acc('微信', 'online', 1200), acc('信用卡', 'credit', 0)]
-      : [acc('现金', 'cash', 0)],
+      : Object.entries(ACC_TYPES).map(([type,v])=>acc(v.name,type,0)),
     txns: [],
     budgets: { [bookId]: { total: demo ? 8000 : 0, cats: {} } },
     members: ['本人', '配偶', '孩子', '父母'],

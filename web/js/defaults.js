@@ -1,19 +1,53 @@
 'use strict';
-/* 默认数据：分类、首页模块、时间看板、账户类型、示例数据 */
+/* 默认分类：个人记账分类方案·简洁高效版；新数据使用，既有分类不自动覆盖。 */
 const DEFAULT_EXP = [
-  ['餐饮', '🍚', '#FF8A65'], ['交通', '🚇', '#4FC3F7'], ['购物', '🛍️', '#F06292'], ['零食', '🧋', '#FFB74D'],
-  ['日用', '🧴', '#81C784'], ['水果', '🍎', '#E57373'], ['蔬菜', '🥬', '#9CCC65'], ['娱乐', '🎮', '#BA68C8'],
-  ['住房', '🏠', '#7986CB'], ['通讯', '📱', '#4DB6AC'], ['服饰', '👕', '#FF8A80'], ['美容', '💄', '#F48FB1'],
-  ['医疗', '💊', '#EF5350'], ['教育', '📚', '#64B5F6'], ['旅行', '✈️', '#26C6DA'], ['运动', '🏃', '#8BC34A'],
-  ['宠物', '🐱', '#FFCA28'], ['人情', '🧧', '#E53935'], ['烟酒', '🍺', '#A1887F'], ['数码', '💻', '#78909C'],
-  ['汽车', '🚗', '#5C6BC0'], ['其他', '📦', '#BDBDBD']
+  ["餐饮", "🍽️", "#FF8A65"],
+  ["居住与家用", "🏠", "#7986CB"],
+  ["购物", "🛍️", "#F06292"],
+  ["交通出行", "🚗", "#4FC3F7"],
+  ["医疗健康", "🏥", "#EF5350"],
+  ["家庭与人情", "👪", "#E57373"],
+  ["休闲娱乐", "🎮", "#BA68C8"],
+  ["学习与工作", "📚", "#64B5F6"],
+  ["通讯与数字服务", "📱", "#4DB6AC"],
+  ["金融与保障", "🏦", "#FFB74D"],
+  ["其他支出", "🧾", "#90A4AE"]
 ];
 const DEFAULT_INC = [
-  ['工资', '💰', '#FFB300'], ['奖金', '🏆', '#FF7043'], ['兼职', '💼', '#26A69A'], ['理财', '📈', '#EF5350'],
-  ['红包', '🧧', '#E53935'], ['报销', '🧾', '#5C6BC0'], ['退款', '↩️', '#78909C'], ['其他', '📦', '#BDBDBD']
+  ["工资与劳动收入", "💼", "#FFB300"],
+  ["经营与副业收入", "🏪", "#26A69A"],
+  ["投资与资产收入", "📈", "#EF5350"],
+  ["亲友赠与", "🎁", "#E53935"],
+  ["闲置变现", "♻️", "#66BB6A"],
+  ["补偿与返还", "↩️", "#5C6BC0"],
+  ["其他收入", "💰", "#BDBDBD"]
 ];
 const subList = s => s.split(' ').map(x => { const m = x.match(/^(.+?)(\p{Extended_Pictographic}\uFE0F?)$/u); return m ? [m[1], m[2]] : [x, '']; });
 const DEFAULT_SUBS = {
+  expense: {
+    "餐饮": [["买菜／食材", "🥬"], ["外卖／快餐", "🥡"], ["餐馆／聚餐", "🍲"], ["零食／饮料", "🥤"]],
+    "居住与家用": [["房租／房贷利息", "🔑"], ["物业费", "🏢"], ["水电燃气", "💡"], ["家庭维修／装修", "🛠️"], ["家具／家电", "🛋️"], ["清洁／日用品", "🧹"], ["厨房用品", "🍳"], ["家庭杂项", "🧺"]],
+    "购物": [["服装鞋帽", "👕"], ["箱包／配饰", "👜"], ["美妆护肤", "💄"], ["数码产品", "💻"], ["其他网购／商品", "📦"]],
+    "交通出行": [["公交／地铁", "🚇"], ["打车／网约车", "🚕"], ["火车／飞机／长途交通", "✈️"], ["加油／充电", "⛽"], ["停车／过路费", "🅿️"], ["车辆保养／维修", "🔧"], ["车辆保险／税费", "🛡️"], ["共享单车", "🚲"]],
+    "医疗健康": [["看病／检查", "🩺"], ["药品", "💊"], ["住院／治疗", "🛏️"], ["医疗器械", "🌡️"], ["护理／康复", "🩹"], ["体检／口腔／眼科", "🦷"], ["健身／运动", "💪"]],
+    "家庭与人情": [["给父母／长辈", "👴"], ["家庭生活费", "🏡"], ["亲友红包／礼金", "🧧"], ["送礼", "🎁"], ["请客／人情聚餐", "🥂"], ["其他家庭支出", "👪"]],
+    "休闲娱乐": [["旅游／度假", "🏖️"], ["酒店／住宿", "🏨"], ["电影／演出", "🎬"], ["游戏", "🎮"], ["兴趣爱好", "🎨"], ["运动／户外", "🏕️"], ["其他娱乐", "🎉"]],
+    "学习与工作": [["书籍／课程", "📖"], ["培训／考试／证书", "📝"], ["文具／办公用品", "🖊️"], ["工作相关支出", "💼"], ["职业工具／软件", "🧰"]],
+    "通讯与数字服务": [["手机话费／流量", "📞"], ["宽带／网络", "🌐"], ["软件／视频／音乐会员", "🎧"], ["云存储／应用服务", "☁️"], ["快递／邮寄", "📮"], ["打印／复印", "🖨️"], ["其他生活服务", "🛎️"]],
+    "金融与保障": [["保险保费", "🛡️"], ["银行／支付手续费", "💳"], ["贷款利息", "🏦"], ["投资交易手续费", "📊"], ["税费", "🧾"], ["其他金融费用", "💱"]],
+    "其他支出": [["无法归类的临时支出", "📌"], ["特殊支出", "⭐"]]
+  },
+  income: {
+    "工资与劳动收入": [["工资", "💵"], ["加班费", "⏰"], ["奖金／绩效", "🏆"], ["津贴／补贴", "📋"], ["兼职／劳务", "🛠️"], ["其他劳动收入", "🧰"]],
+    "经营与副业收入": [["生意／经营所得", "🏪"], ["自由职业", "🖋️"], ["线上业务", "🌐"], ["副业收入", "🚀"], ["其他经营收入", "💼"]],
+    "投资与资产收入": [["银行利息", "🏦"], ["理财收益", "📈"], ["基金／股票收益", "📊"], ["房租收入", "🏠"], ["其他资产收益", "💹"]],
+    "亲友赠与": [["礼金／红包", "🧧"], ["家庭补贴", "🏡"], ["亲友赠与", "🎁"], ["其他赠与", "💝"]],
+    "闲置变现": [["二手物品出售", "📦"], ["卖废品", "♻️"], ["其他闲置变现", "🏷️"]],
+    "补偿与返还": [["报销款", "🧾"], ["退款", "↩️"], ["押金退还", "🔐"], ["赔偿／补偿", "⚖️"], ["其他返还款", "🔄"]],
+    "其他收入": [["意外收入", "🍀"], ["其他零星收入", "💰"]]
+  }
+};
+const LEGACY_DEFAULT_SUBS = {
   expense: {
     餐饮: '早餐🥐 午餐🍱 晚餐🍲 外卖🛵 夜宵🍢', 交通: '地铁🚇 公交🚌 打车🚕 火车🚄 共享单车🚲', 购物: '网购📦 超市🛒 家电📺 家居🛋️',
     零食: '奶茶🧋 咖啡☕ 零食🍪', 日用: '日用品🧴 洗护🧼 纸品🧻', 住房: '房租🏠 水电燃气💡 物业🏢 房贷🏦', 通讯: '话费📱 宽带🌐',
@@ -22,13 +56,13 @@ const DEFAULT_SUBS = {
   },
   income: { 理财: '利息🏦 基金📈 股票💹', 兼职: '外包💻 稿费✍️' }
 };
-function addDefaultSubs(d) {
+function addDefaultSubs(d, legacy=false) {
   for (const type of ['expense', 'income']) {
     const list = d.categories[type];
     list.forEach(c => { if (!c.pid) c.pid = ''; });
     for (const c of list.filter(x => !x.pid)) {
-      const def = DEFAULT_SUBS[type][c.name];
-      if (def && !list.some(x => x.pid === c.id)) subList(def).forEach(([name, icon]) => list.push({ id: uid(), pid: c.id, name, icon: icon || c.icon, color: c.color }));
+      const def = (legacy?LEGACY_DEFAULT_SUBS:DEFAULT_SUBS)[type][c.name];
+      if (def && !list.some(x => x.pid === c.id)) (Array.isArray(def)?def:subList(def)).forEach(([name, icon]) => list.push({ id: uid(), pid: c.id, name, icon: icon || c.icon, color: c.color }));
     }
   }
 }
@@ -127,7 +161,7 @@ const ACC_TYPES = {
 };
 // Read compatibility for old backups/importers; new account choices use the seven groups above.
 Object.defineProperties(ACC_TYPES,{credit:{value:{name:'信用卡',icon:'💳'}},debt:{value:{name:'应收应付（旧账户）',icon:'🤝'}}});
-const EMOJIS = '🍚🍜🍔🍕🍰🧋☕🍺🍎🥬🛒🛍️👕👟💄🧴🏠💡💧🔥📱💻🎮🎬🎤🎵📚✏️🎓🚇🚌🚕🚗⛽✈️🏨🏃⚽🏸💊🏥🐱🐶👶🎁🧧💰💼📈🏆🧾↩️💳🔧🧹🌹🚬🎂📦'.match(/\p{Extended_Pictographic}\uFE0F?/gu);
+const EMOJIS = [...new Set('🍚🍜🍔🍕🍰🧋☕🍺🍎🥬🛒🛍️👕👟💄🧴🏠💡💧🔥📱💻🎮🎬🎤🎵📚✏️🎓🚇🚌🚕🚗⛽✈️🏨🏃⚽🏸💊🏥🐱🐶👶🎁🧧💰💼📈🏆🧾↩️💳🔧🧹🌹🚬🎂📦'.match(/\p{Extended_Pictographic}\uFE0F?/gu).concat(DEFAULT_EXP.map(c=>c[1]),DEFAULT_INC.map(c=>c[1]),Object.values(DEFAULT_SUBS.expense).flat().map(c=>c[1]),Object.values(DEFAULT_SUBS.income).flat().map(c=>c[1])))];
 const COLORS = ['#FF8A65', '#FFB74D', '#FFCA28', '#9CCC65', '#4DB6AC', '#4FC3F7', '#64B5F6', '#7986CB', '#BA68C8', '#F06292', '#E57373', '#A1887F', '#90A4AE', '#BDBDBD'];
 const BOOK_ICONS = ['📒', '🏠', '✈️', '💼', '🎓', '🚗', '👶', '🎉', '💒', '🏪'];
 
@@ -166,7 +200,8 @@ function initData(demo) {
 
 function seed(d) {
   const B = d.curBook, E = d.categories.expense, I = d.categories.income;
-  const cat = n => (E.find(c => !c.pid && c.name === n) || I.find(c => !c.pid && c.name === n)).id;
+  const names={交通:'交通出行',零食:'零食／饮料',水果:'买菜／食材',蔬菜:'买菜／食材',日用:'清洁／日用品',娱乐:'休闲娱乐',服饰:'服装鞋帽',医疗:'医疗健康',运动:'运动／户外',人情:'家庭与人情',住房:'居住与家用',通讯:'通讯与数字服务',兼职:'兼职／劳务',红包:'亲友赠与',理财:'投资与资产收入',报销:'报销款'};
+  const cat = (n,type) => {const name=names[n]||n;return d.categories[type].find(c=>c.name===name);};
   const acc = n => d.accounts.find(a => a.name === n).id;
   const rnd = (a, b) => r2(a + Math.random() * (b - a));
   const pick = a => a[Math.floor(Math.random() * a.length)];
@@ -176,8 +211,8 @@ function seed(d) {
     if (t > now) return;
     let catId = '';
     if (catName) {
-      const id = cat(catName), subs = all.filter(c => c.pid === id);
-      const sub = subs.find(c => c.name === note) || (subs.length ? pick(subs) : null);
+      const c = cat(catName,type), id=c.id, subs = c.pid?[]:all.filter(c => c.pid === id);
+      const sub = subs.find(c => note&&c.name.includes(note)) || (subs.length ? pick(subs) : null);
       catId = sub ? sub.id : id;
       if (sub && sub.name === note) note = '';
     }

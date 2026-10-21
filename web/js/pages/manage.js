@@ -54,7 +54,7 @@ function catGridHtml(key) {
   const st = CGS[key], cnt = catCounts(), list = tops(st.type), sel = st.sel || [];
   if (!list.some(t => t.id === st.open)) st.open = (list.find(t => sel.some(id => inCat(id, t.id))) || list[0] || {}).id || '';
   const lp = st.noLp ? '' : st.mode === 'manage' ? 'cat' : 'catpick';
-  const grid = list.map(t => cgTile(t, { on: sel.some(id => inCat(id, t.id)), open: t.id === st.open,
+  const grid = list.map(t => cgTile(t, { on: st.mode==='single' ? t.id===st.open : sel.some(id => inCat(id, t.id)), open: t.id === st.open,
     n: catTotal(cnt, t.id), tap: `cgTop('${key}','${t.id}')`, lp, type: st.type, mode: st.mode, partial: (st.mode==='manage'||st.mode==='multi') && !sel.includes(t.id) && sel.some(id=>inCat(id,t.id)) })).join('');
   const top = list.find(t => t.id === st.open);
   let sub = '';
@@ -87,7 +87,7 @@ Pages.cats = () => {
   const st = CGS.manage || (CGS.manage = { mode: 'manage', open: '', rerender: () => render() });
   st.type = CT;st.selections ||= {};
   st.sel = st.selections[CT] = (st.selections[CT]||[]).filter(id=>S.categories[CT].some(c=>c.id===id));
-  return hdr('分类管理', `<a onclick="editCat()">＋ 一级</a>`) + `<div style="text-align:center;padding:14px 0 0"><div class="seg light">${[['expense', '支出分类'], ['income', '收入分类']].map(([k, n]) => `<i class="${CT === k ? 'on' : ''}" onclick="CT='${k}';render()">${n}</i>`).join('')}</div></div>
+  return hdr('分类管理', `<a onclick="editCat()">＋ 一级</a>`) + `<div class="cat-type-tools"><div class="seg light">${[['expense', '支出分类'], ['income', '收入分类']].map(([k, n]) => `<i class="${CT === k ? 'on' : ''}" onclick="CT='${k}';render()">${n}</i>`).join('')}</div><button type="button" onclick="openDefaultCategoryTemplate()">默认方案</button></div>
   <div class="card cat-ledger-actions"><button class="btn ghost" onclick="CGS.manage.selections[CT]=[];render()" ${st.sel.length?'':'disabled'}>清空</button><button class="btn" onclick="openCategoryLedger()" ${st.sel.length?'':'disabled'}>查看所选流水（${st.sel.length}）</button></div>
   <div class="card cg-card">${catGridHtml('manage')}</div>
   <div class="ver">可多选分类，再点「查看所选流水」。一级分类包含其二级分类，点二级分类可细选。数字和明细统计全部账本，长按分类可编辑，长按后拖动排序</div>`;
@@ -101,6 +101,25 @@ function selectManagedCategory(id) {
   st.selections[CT]=st.sel;render();
 }
 function openCategoryLedger() {const ids=CGS.manage?.sel||[];if(!ids.length)return;openLedgerDetails({scope:'allBooks',type:CT,filters:{cats:[...ids]}});}
+function openDefaultCategoryTemplate() {
+  openSheet('默认分类方案',`<div class="tip">简洁高效版：支出 11 类、收入 7 类。添加缺少的一、二级分类，保留已有分类、图标和流水，不会自动把旧账重新分类。</div>
+    ${[['expense','支出',DEFAULT_EXP],['income','收入',DEFAULT_INC]].map(([type,title,list])=>`<label>${title}分类</label><div class="chips">${list.map(([name,icon])=>`<i class="chip">${icon} ${esc(name)} · ${DEFAULT_SUBS[type][name].length}</i>`).join('')}</div>`).join('')}
+    <div class="btn-row"><button class="btn ghost" onclick="closeSheet()">取消</button><button class="btn" onclick="applyDefaultCategoryTemplate()">添加缺少的分类</button></div>`);
+}
+function applyDefaultCategoryTemplate() {
+  let added=0;
+  for(const [type,defs]of [['expense',DEFAULT_EXP],['income',DEFAULT_INC]]){
+    const list=S.categories[type];
+    for(const [name,icon,color]of defs){
+      let parent=list.find(c=>!c.pid&&c.name===name);
+      if(!parent){parent={id:uid(),name,icon,color,pid:''};list.push(parent);added++;}
+      for(const [childName,childIcon]of DEFAULT_SUBS[type][name])if(!list.some(c=>c.pid===parent.id&&c.name===childName)){
+        list.push({id:uid(),name:childName,icon:childIcon,color:parent.color,pid:parent.id});added++;
+      }
+    }
+  }
+  if(added)save();closeSheet();render();toast(added?`已添加 ${added} 个分类`:'默认分类已齐全');
+}
 function openBookLedger(id){switchBook(id);openLedgerDetails();}
 /* 从筛选面板长按进来编辑：保存 / 删除 / 合并后回到筛选面板 */
 let _catReturn = null;

@@ -300,7 +300,7 @@ Pages.ocr = () => {
     <div class="kv" onclick="ocrPickAcc()"><span>账户</span><b>${a ? accIcon(a) + ' ' + esc(a.name) : '请选择'} ›</b></div>
     <div class="kv" onclick="ocrPickCat(-1)"><span>默认分类（未推荐时使用）</span><b>${c.icon} ${esc(catLabel(OC.catId))} ›</b></div>
     <div class="kv" onclick="ocrPickMember()"><span>成员</span><b>${esc(OC.member)} ›</b></div>
-    <div class="kv" onclick="dateSheet('选择日期',OC.date,v=>{OC.date=v;render()},{max:ymd(Date.now())})"><span>日期</span><b>${OC.date} ›<small class="opt-sub">截图里没有时间的订单用这个日期</small></b></div></div>
+    <div class="kv" onclick="dateSheet('选择日期',OC.date,v=>{OC.date=v;render()},{max:ymd(Date.now())})"><span>日期</span><b>${dateDisplay(OC.date)} ›<small class="opt-sub">截图里没有时间的订单用这个日期</small></b></div></div>
   <div class="card"><div class="card-hd"><b>识别结果 · ${OC.imgs} 张图 ${items.length} 笔</b><a onclick="askConfirm('清空识别结果？',()=>{OC.items=[];OC.imgs=0;OC.err='';OC.incompleteByFile={};render()})">清空</a></div>
     <div class="tip">分类优先参考当前账本历史和已确认的手动分类，再匹配商品关键词。拿不准的使用默认分类；点击订单可修改，导入后记住手动选择。</div>
     ${offN ? `<div class="oc-review-actions"><span>${offN} 笔退款 / 关闭订单默认不导入，点击明细可修改。</span><button class="chip" onclick="ocrSelectExcluded()">${items.filter(it=>!ocrCanImport(it)).every(it=>it.reviewSel)?'取消全选':'全选不导入记录'}</button><button class="chip" onclick="ocrIgnoreExcluded()">忽略选中 ${items.filter(it=>!ocrCanImport(it)&&it.reviewSel).length} 笔</button></div>` : ''}

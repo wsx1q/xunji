@@ -35,8 +35,8 @@ function pickBdTime() {
   const presets = [['不限', '', ''], ['本月', ymd(periodRange('month')[0]), ''], ['上月', ...periodRange('month', shiftRef('month', now, -1)).map((t, i) => ymd(i ? t - 864e5 : t))],
     ['本年', ymd(periodRange('year')[0]), ''], ['近 30 天', ymd(d30), ''], ['近 90 天', ymd(sod(now) - 89 * 864e5), '']];
   openSheet('时间', `<div class="chips" style="flex-wrap:wrap">${presets.map(([n, s, e]) => `<i class="chip ${BD.start === s && BD.end === e ? 'on' : ''}" onclick="BD.start='${s}';BD.end='${e}';pickBdTime()">${n}</i>`).join('')}</div>
-    <label>开始日期（留空表示不限）</label><div class="btn-row"><b class="field pick" onclick="pickBdDate('start','开始日期')">${BD.start || '不限'}</b><b class="clr" onclick="BD.start='';pickBdTime()">清空</b></div>
-    <label>结束日期（留空表示至今，含当天）</label><div class="btn-row"><b class="field pick" onclick="pickBdDate('end','结束日期')">${BD.end || '至今'}</b><b class="clr" onclick="BD.end='';pickBdTime()">清空</b></div>
+    <label>开始日期（留空表示不限）</label><div class="btn-row"><b class="field pick" onclick="pickBdDate('start','开始日期')">${BD.start ? dateDisplay(BD.start) : '不限'}</b><b class="clr" onclick="BD.start='';pickBdTime()">清空</b></div>
+    <label>结束日期（留空表示至今，含当天）</label><div class="btn-row"><b class="field pick" onclick="pickBdDate('end','结束日期')">${BD.end ? dateDisplay(BD.end) : '至今'}</b><b class="clr" onclick="BD.end='';pickBdTime()">清空</b></div>
     <button class="btn" onclick="if(BD.start&&BD.end&&BD.end<BD.start)return toast('结束日期不能早于开始日期');closeSheet();render()">确定</button>`);
 }
 function pickBdDate(field, title) {

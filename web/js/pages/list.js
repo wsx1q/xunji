@@ -119,6 +119,7 @@ Pages.list = () => {
   <div class="filters"><input id="q" class="search" placeholder="搜索备注 / 分类 / 账户 / 商家 / 项目 / 金额" value="${esc(L.q)}" oninput="L.q=this.value;L.limit=${LIST_PAGE};clearTimeout(L._qt);L._qt=setTimeout(renderListBody,180);qHistShow(true)"
       onfocus="qHistShow(true)" onblur="qHistAdd(this.value);setTimeout(()=>qHistShow(false),200)" onkeydown="if(event.key==='Enter')this.blur()" enterkeyhint="search">
     <div id="qhist" class="qhist"></div>
+    <button type="button" class="note-replace-entry" onclick="openNoteReplace()">备注关键词替换</button>
     <div class="chips">${[['all', '全部'], ['expense', '支出'], ['income', '收入'], ['transfer', '转账'], ['adjust', '余额变更']].map(([k, n]) => `<i class="chip ${L.type === k ? 'on' : ''}" onclick="L.type='${k}';L.limit=${LIST_PAGE};render()">${n}</i>`).join('')}
     ${Array.isArray(L.accountIds)?`<i class="chip on" onclick="L.accountIds=null;L.detailNote=L.accountLabel='';render()">${esc(L.accountLabel||'账户范围')} · ${L.accountIds.length} 个账户 ✕</i>`:''}
     ${L.sourceType&&L.sourceType!=='all'?`<i class="chip on" onclick="L.sourceType='all';render()">看板限定：${TX_TYPES[L.sourceType]} ✕</i>`:''}

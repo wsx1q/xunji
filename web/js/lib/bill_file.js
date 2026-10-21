@@ -152,12 +152,13 @@
   function wechatRows(data) {
     return data.map(d => {
       const r = { ...d, type: d.dir === '支出' ? 'expense' : d.dir === '收入' ? 'income' : '', refund: 0, skip: '' };
-      const part = d.status.match(/已退款[(（]?[¥￥]?\s*([\d.]+)/);
+      const part = d.status.match(/已退款\s*[(（]?\s*[¥￥]?\s*([\d,]+(?:\.\d+)?)/);
+      if (/已全额退款/.test(d.status) && r.type==='expense')r.refund=r.amount;
       if (/退款/.test(d.cls)) r.skip = '退款';
       else if (!r.type) r.skip = '中性交易';
       else if (BAD.test(d.status)) r.skip = /退款/.test(d.status) ? '已全额退款' : '交易关闭';
       else if (part) {
-        r.refund = Math.round(parseFloat(part[1]) * 100) / 100;
+        r.refund = num(part[1]);
         if (r.amount - r.refund <= 0.001) r.skip = '已全额退款';
       }
       return r;

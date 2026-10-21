@@ -4,6 +4,11 @@ const BILL_PF = { alipay: '支付宝', wechat: '微信' };
 let BI = null;
 // 关键词 → 候选分类名（按顺序找用户分类里第一个存在的）
 const BILL_CAT_RULES = [
+  [/保险|保费/, ['保险保费','保险','金融与保障']],
+  [/(?:基金|证券|股票|投资).*手续费|手续费.*(?:基金|证券|股票)/, ['投资交易手续费','手续费','金融与保障']],
+  [/手续费|银行服务费|支付服务费/, ['银行／支付手续费','手续费','其他金融费用']],
+  [/贷款利息|借款利息|还款利息/, ['贷款利息','其他金融费用']],
+  [/所得税|税务|缴税|税费/, ['税费','金融与保障']],
   [/打车|快车|专车|出租|滴滴|顺风车|花小猪|曹操出行|T3出行|代驾/, ['打车', '交通']],
   [/地铁|轨道交通/, ['地铁', '交通']], [/公交|巴士/, ['公交', '交通']],
   [/火车|高铁|动车|12306|铁路|中铁|机票|航空|携程|飞猪|去哪儿|同程/, ['火车', '机票', '旅行', '交通']],
@@ -12,23 +17,24 @@ const BILL_CAT_RULES = [
   [/早餐|包子|豆浆|油条|烧饼|煎饼/, ['早餐', '餐饮']],
   [/奶茶|咖啡|瑞幸|星巴克|喜茶|蜜雪|茶百道|古茗|霸王茶姬|库迪/, ['奶茶', '饮品', '零食', '餐饮']],
   [/餐饮|餐厅|饭店|食堂|火锅|烧烤|麦当劳|肯德基|汉堡|饺子|小吃|面馆|米线|美食/, ['餐饮']],
-  [/水果|果业|鲜果/, ['水果']],
-  [/生鲜|蔬菜|买菜|菜市场|谊品|叮咚|盒马|朴朴|钱大妈/, ['蔬菜', '买菜', '日用']],
+  [/水果|果业|鲜果/, ['水果','买菜／食材']],
+  [/生鲜|蔬菜|买菜|菜市场|谊品|叮咚|盒马|朴朴|钱大妈/, ['蔬菜', '买菜', '买菜／食材','日用']],
   [/超市|便利店|百货|日用/, ['超市', '日用', '购物']],
   [/话费|流量|中国移动|中国联通|中国电信|宽带|充值缴费/, ['话费', '通讯']],
   [/电费|水费|燃气|物业|住房/, ['水电燃气', '物业', '住房']],
   [/房租|租房/, ['房租', '住房']],
-  [/医院|药房|药店|诊所|医疗|健康/, ['医疗']],
-  [/酒店|宾馆|住宿|民宿/, ['住宿', '旅行']],
-  [/景区|门票|观光|旅游|旅行/, ['旅行']],
+  [/药房|药店/, ['药品','医疗']],
+  [/医院|诊所|医疗|健康/, ['看病／检查','医疗健康','医疗']],
+  [/酒店|宾馆|住宿|民宿/, ['住宿','酒店／住宿', '旅行']],
+  [/景区|门票|观光|旅游|旅行/, ['旅行','旅游／度假']],
   [/电影|KTV|游戏|娱乐|休闲|演出|剧本杀/, ['娱乐']],
   [/红包/, ['红包', '人情']], [/转账/, ['人情', '转账', '其他']],
-  [/服饰|服装|鞋|衣/, ['服饰']], [/数码|电器|手机|电脑/, ['数码', '购物']],
-  [/运动|健身|户外|球/, ['运动']], [/宠物|猫|狗粮/, ['宠物']], [/教育|学费|培训|书店|图书/, ['教育']],
-  [/美容|美发|理发|美甲/, ['美容']], [/烟|酒/, ['烟酒']],
+  [/服饰|服装|鞋|衣/, ['服饰','服装鞋帽']], [/数码|电器|手机|电脑/, ['数码', '购物']],
+  [/运动|健身|户外|球/, ['运动','健身／运动']], [/宠物|猫|狗粮/, ['宠物']], [/教育|学费|培训|书店|图书/, ['教育','书籍／课程','学习与工作']],
+  [/美容|美发|理发|美甲/, ['美容','美妆护肤']], [/烟|酒/, ['烟酒']],
   [/淘宝|天猫|京东|拼多多|抖音|唯品会/, ['网购', '购物']]
 ];
-const BILL_INC_RULES = [[/红包/, ['红包', '其他']], [/转账/, ['转账', '其他']], [/工资|薪/, ['工资']], [/利息|收益|理财/, ['利息', '理财']]];
+const BILL_INC_RULES = [[/红包/, ['红包', '其他']], [/转账/, ['转账', '其他']], [/工资|薪/, ['工资']], [/利息/, ['利息','银行利息','理财']], [/收益|理财/, ['理财收益','理财','投资与资产收入']]];
 function catByNames(type, names) {
   const list = S.categories[type];
   for (const n of names) { const c = list.find(x => x.name === n); if (c) return c.id; }
@@ -88,31 +94,37 @@ async function billLoad(name, buf) {
   BI.busy = '正在读取 ' + name; render();
   try {
     const { platform, rows } = await parseBillFile(name, buf);
-    const srcs = new Set(), near = new Map();
+    const srcs = new Map(), near = new Map();
     for (const t of S.txns) {
-      if (t.src) srcs.add(t.src);
+      if (t.src) { if (!srcs.has(t.src)) srcs.set(t.src, []); srcs.get(t.src).push(t); }
       else if (t.type === 'expense' || t.type === 'income') { const k = t.type + t.amount; if (!near.has(k)) near.set(k, []); near.get(k).push(t.time); }
     }
-    const have = new Set(BI.items.map(it => it.key));
+    const have = new Map(BI.items.map((it,i) => [it.key, i]));
     let added = 0;
     for (const r of rows) {
       r.pf = platform;
       const key = `${platform}:${r.id || r.time + '_' + r.amount}`;
-      if (have.has(key)) continue;
-      have.add(key);
+      const previousIndex = have.get(key), previous = previousIndex == null ? null : BI.items[previousIndex];
+      // Overlapping exports can contain both the paid and refunded snapshot.
+      // Keep the snapshot with the greatest confirmed refund, independent of file order.
+      if (previous && !(r.type === 'expense' && r.refund > previous.r.refund && r.amount === previous.r.amount)) continue;
       const amount = r2(r.amount - r.refund);
       const it = { key, pf: platform, r, type: r.type, amount, time: r.time, method: r.method, skip: r.skip, note: billNote(r), merchant: billMerchant(r) };
-      if (!it.skip && srcs.has(key)) it.skip = '已导入过';
-      if (!it.skip && !(amount > 0)) it.skip = '金额为 0';
+      const existing = srcs.get(key) || [];
+      const target = existing.length === 1 ? existing[0] : null;
+      if ((!it.skip || it.skip==='已全额退款') && target && billCanUpdateRefund(it,target)) {
+        it.skip='';it.updateId=target.id;it.beforeAmount=target.amount;
+      } else if (!it.skip && existing.length) it.skip = '已导入过';
+      if (!it.skip && !it.updateId && !(amount > 0)) it.skip = '金额为 0';
       if (!it.skip) {
-        it.catId = billGuessCat(r);
-        it.dup = (near.get(r.type + amount) || []).some(x => Math.abs(x - r.time) < 15 * 6e4);
+        it.catId = it.updateId ? target.catId : billGuessCat(r);
+        it.dup = (near.get(r.type + amount) || []).concat(r.refund ? near.get(r.type + r.amount) || [] : []).some(x => Math.abs(x - r.time) < 15 * 6e4);
         it.sel = !it.dup;
         const mk = `${platform}|${r.method}`;
         if (!(mk in BI.acc)) BI.acc[mk] = billGuessAcc(r.method, platform);
       }
-      BI.items.push(it);
-      added++;
+      if (previousIndex == null) { have.set(key,BI.items.length); BI.items.push(it); added++; }
+      else BI.items[previousIndex]=it;
     }
     BI.items.sort((a, b) => b.time - a.time);
     BI.files.push(`${BILL_PF[platform]} · ${name}`);
@@ -137,7 +149,7 @@ Pages.bill = () => {
       <div class="oc-m" onclick="${it.skip && !it.forced ? `billToggle(${i})` : `billEdit(${i})`}">
         <div class="oc-t">${esc(it.note)}</div>
         <div class="oc-s">${[`${ymd(it.time).slice(5)} ${hm(it.time)}`, `<em>${BILL_PF[it.pf]}</em>`, it.method && esc(it.method), c && `${c.icon} ${esc(c.name)}`, it.skip && `<span class="oc-k">${esc(it.skip)}${it.sel ? ' · 仍导入' : ''}</span>`,
-          it.r.refund && !off && `<span class="oc-k">已扣退款 ${money(it.r.refund)}</span>`, it.dup && '<span class="oc-k warn">可能已记过</span>'].filter(Boolean).join(' · ')}</div>
+          it.r.refund && !off && `<span class="oc-k">已扣退款 ${money(it.r.refund)}</span>`, it.updateId && `<span class="oc-k warn">更新原支出 ${money(it.beforeAmount)} → ${money(it.amount)}</span>`, it.dup && '<span class="oc-k warn">可能已记过</span>'].filter(Boolean).join(' · ')}</div>
       </div>
       <b class="oc-a ${it.type === 'income' ? 'inc' : ''}">${it.type === 'income' ? '+' : ''}${money(it.amount)}</b></div>`;
   };
@@ -148,7 +160,7 @@ Pages.bill = () => {
     <div class="tip">支付宝：我的 → 账单 → 右上角 ⋯ → 开具交易流水证明 → 用于个人对账，发到邮箱后解压得到 CSV。<br>
       微信：我 → 服务 → 钱包 → 账单 → 下载账单 → 用于个人对账，得到 xlsx。<br>
       也可以在微信 / 文件管理里点开账单文件 →「用其他应用打开」→ 选洵记。<br>
-      退款、交易关闭、金额为 0、转账到余额宝 / 还花呗这类不计收支的记录默认不导入（识别有误的可以在「不导入」里勾选）；部分退款会从原订单金额里扣掉。</div>
+      退款、交易关闭、金额为 0、转账到余额宝 / 还花呗这类不计收支的记录默认不导入（识别有误的可以在「不导入」里勾选）；部分退款只记扣除退款后的净支出；同一订单已导入的原支出，可更新金额，不会再新增一笔。</div>
     ${BI.files.length ? `<div class="ver" style="text-align:left;padding-top:8px">已读取：${BI.files.map(esc).join('，')}</div>` : ''}</div>
   ${methods.length ? `
   <div class="card"><div class="card-hd"><b>付款方式对应账户</b><small>导入后会记住</small></div>
@@ -179,6 +191,7 @@ function billForce(it) {
 }
 function billToggle(i) {
   const it = BI.items[i];
+  if (it.skip === '已导入过') return toast('同一订单已导入，请在流水中修改，避免重复记账');
   if (it.skip && !it.sel) billForce(it);
   it.sel = !it.sel;
   render();
@@ -195,7 +208,12 @@ function billPickAcc(mk) { accSheet(`「${esc(mk.split('|')[1] || '未注明')}�
 function billPickMember() { memberSheet(BI.member, m => { BI.member = m; }); }
 function billEdit(i) {
   const it = BI.items[i];
+  if(it.updateId) {
+    const t=S.txns.find(t=>t.id===it.updateId);
+    return openSheet('更新退款后的支出',`<div class="kv"><span>原支出</span><b>${money(it.beforeAmount)}</b></div><div class="kv"><span>累计退款</span><b>${money(it.r.refund)}</b></div><div class="kv"><span>更新后支出</span><b>${money(it.amount)}</b></div><div class="tip">${esc(it.r.party)} · ${esc(it.r.goods)}<br>保留原流水的分类、账户、日期和备注，不新增流水。${t?`<br>${esc(catLabel(t.catId))} · ${esc(accName(t.accountId))}`:''}</div><button class="btn" onclick="closeSheet()">知道了</button>`);
+  }
   openSheet('修改这笔', `<div class="chips" style="margin-bottom:6px">${[['expense', '支出'], ['income', '收入']].map(([k, n]) => `<i class="chip ${it.type === k ? 'on' : ''}" onclick="billSetType(${i},'${k}')">${n}</i>`).join('')}</div>
+    ${it.updateId ? `<div class="tip">将原支出 ${money(it.beforeAmount)} 更新为退款后的 ${money(it.amount)}，保留原分类、账户和备注，不新增流水。</div>` : ''}
     <label>金额</label><input id="biA" class="field" type="number" inputmode="decimal" step="0.01" value="${it.amount}">
     <label>备注</label><input id="biN" class="field" value="${esc(it.note)}" maxlength="60">
     <div class="kv" onclick="billSaveEdit(${i},true)"><span>分类</span><b>${esc(catLabel(it.catId))} ›</b></div>
@@ -231,28 +249,48 @@ function billPickCat(i) {
 function billImport() {
   const sel = BI.items.filter(billSel);
   if (!sel.length) return toast('没有选中要导入的记录');
-  const zero = sel.find(it => !(it.amount > 0));
+  const zero = sel.find(it => !(it.amount > 0) && !(it.updateId && it.amount===0));
   if (zero) return toast(`「${zero.note}」金额为 0，请点开修改金额或取消勾选`);
-  const miss = [...new Set(sel.map(it => `${it.pf}|${it.method}`).filter(mk => !accById(BI.acc[mk])))];
+  const miss = [...new Set(sel.filter(it=>!it.updateId).map(it => `${it.pf}|${it.method}`).filter(mk => !accById(BI.acc[mk])))];
   if (miss.length) return toast(`请先选择「${miss[0].split('|')[1] || '未注明'}」对应的账户`);
   const dupN = sel.filter(it => it.dup).length;
   const exp = r2(sel.filter(it => it.type === 'expense').reduce((a, it) => a + it.amount, 0));
   const inc = r2(sel.filter(it => it.type === 'income').reduce((a, it) => a + it.amount, 0));
-  askConfirm(`导入 ${sel.length} 笔：支出 ${money(exp)}${inc ? `，收入 ${money(inc)}` : ''}？${dupN ? `<br><b>其中 ${dupN} 笔可能已经记过。</b>` : ''}`, () => {
+  const updateN=sel.filter(it=>it.updateId).length;
+  askConfirm(`新增 ${sel.length-updateN} 笔${updateN?`，更新退款 ${updateN} 笔（保留原记录）`:''}：支出 ${money(exp)}${inc ? `，收入 ${money(inc)}` : ''}？${dupN ? `<br><b>其中 ${dupN} 笔可能已经记过。</b>` : ''}`, () => {
+    // Recheck after confirmation: repeated clicks / an already changed ledger
+    // must never insert a second copy or overwrite a manual adjustment.
+    const seen=new Set(), current=new Map(S.txns.map(t=>[t.id,t])), sources=new Set(S.txns.filter(t=>t.src).map(t=>t.src));
+    for(const it of sel) {
+      if(seen.has(it.key))return toast('同一订单重复，请重新读取账单');seen.add(it.key);
+      if(it.updateId) { const t=current.get(it.updateId);if(!t||t.src!==it.key||t.amount!==it.beforeAmount||!billCanUpdateRefund(it,t))return toast('原记录已变化，请重新读取账单再更新退款'); }
+      else if(sources.has(it.key))return toast('同一订单已导入，请重新读取账单');
+    }
     const st = S.settings;
     st.billAcc = st.billAcc || {}; st.billCat = st.billCat || {};
+    const replacements=new Map();
     for (const it of sel) {
       const mk = `${it.pf}|${it.method}`;
-      st.billAcc[mk] = BI.acc[mk];
+      if(!it.updateId)st.billAcc[mk] = BI.acc[mk];
       if (it.catSet && it.r.party) st.billCat[it.r.party] = it.catId;
-      insertTxn({
+      if(it.updateId) {
+        const t=current.get(it.updateId);
+        replacements.set(t.id,{...t,amount:it.amount,billAmount:it.r.amount,billRefund:it.r.refund});
+      } else insertTxn({
         id: uid(), bookId: S.curBook, type: it.type, amount: it.amount, catId: it.catId, accountId: BI.acc[mk], toAccountId: '',
-        time: it.time, note: it.note, member: BI.member, merchant: it.merchant, project: '', src: it.key
+        time: it.time, note: it.note, member: BI.member, merchant: it.merchant, project: '', src: it.key, billAmount: it.r.amount, billRefund: it.r.refund
       });
       it.skip = '已导入过'; it.sel = false; it.forced = false;
     }
+    if(replacements.size)S.txns=S.txns.map(t=>replacements.get(t.id)||t);
     save();
-    toast(`已导入 ${sel.length} 笔 ✓`);
+    toast(`新增 ${sel.length-updateN} 笔${updateN?`，更新退款 ${updateN} 笔`:''} ✓`);
     render();
   }, '导入');
+}
+
+function billCanUpdateRefund(it,t) {
+  if(it.type!=='expense'||t.type!=='expense'||!(it.r.refund>0)||!(it.amount>=0)||it.amount!==r2(it.r.amount-it.r.refund))return false;
+  const oldRefund=t.billRefund||0, gross=t.billAmount==null?t.amount:t.billAmount;
+  return gross===it.r.amount && t.amount===r2(gross-oldRefund) && it.r.refund>oldRefund && it.amount<t.amount;
 }

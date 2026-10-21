@@ -69,7 +69,7 @@ Pages.add = () => {
       <div class="opts">
         ${isT ? '' : `<i class="chip" onclick="pickAcc('accountId')">💳 ${esc(accById(E.accountId) ? accFull(accById(E.accountId)) : '未知账户')}</i>`}
         <i class="chip" onclick="pickTxDate()">📅 <span id="dlabel">${dateLabel(E.time)}</span></i>
-        <label class="chip">🕘 <span id="tlabel">${hm(E.time)}</span><input type="time" value="${hm(E.time)}" onclick="try{this.showPicker()}catch(e){}" onchange="setTime(this.value)"></label>
+        <i class="chip" onclick="timeSheet('选择时间',hm(E.time),setTime)">🕘 <span id="tlabel">${hm(E.time)}</span></i>
         <i class="chip now ${Math.abs(Date.now() - E.time) < 6e4 ? 'hide' : ''}" id="nowChip" onclick="setNow()">⟲ 现在</i>
         <i class="chip" onclick="pickTag('member')">👤 ${esc(E.member || '本人')}</i>
         <i class="chip ${E.merchant ? 'set' : ''}" onclick="pickTag('merchant')">🏪 ${esc(E.merchant || '商家')}</i>
@@ -82,10 +82,8 @@ Pages.add = () => {
     </div></div>`;
 };
 After.add = () => { updAmt(); updCat(); renderSubRow(); };
-function dateLabel(t) {
-  const k = sod(t), today = sod(Date.now());
-  return k === today ? '今天' : k === today - 864e5 ? '昨天' : md(t);
-}
+function dateLabel(t) { return dateDisplay(t); }
+
 function setType(k) {
   if (E.type === k) return;
   E.type = k;

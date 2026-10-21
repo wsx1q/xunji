@@ -189,6 +189,7 @@ function bulkSheet() {
   openSheet(`批量修改 ${n} 笔`, row('🗂️', '改分类', 'bulkCat()', '转账、余额变更没有分类，会跳过')
     + row('💳', '改账户', 'bulkAcc()') + row('👤', '改成员', "bulkTag('member')") + row('🏪', '改商家', "bulkTag('merchant')") + row('📁', '改项目', "bulkTag('project')")
     + row('📝', '追加备注', 'bulkNoteAdd()', '加在原备注后面，原来的内容保留')
+    + row('🔤', '替换备注关键词', "openNoteReplace('selected')", '只替换指定文字，其他内容不变，可预览、撤销')
     + row('✂️', '删掉备注里的文字', 'bulkNoteDel()', '只删掉指定的文字，备注其余内容保留')
     + `<div class="btn-row"><button class="btn ghost del" onclick="closeSheet();selDelete()">删除这 ${n} 笔</button></div>
     <div class="ver">改完可以马上撤销，或稍后在「我的 → 撤销上一次合并 / 批量修改」撤销</div>`);
@@ -246,4 +247,62 @@ function bulkNoteDel() {
     <div class="tip">只删掉每笔备注里的这段文字（英文不分大小写），备注其余内容保留。</div>
     <button class="btn" onclick="_sheetCb()">从 ${SEL.size} 笔里删掉</button>`);
   setTimeout(() => $('#bnIn') && $('#bnIn').focus(), 150);
+}
+
+/* 备注查找替换：按原文匹配，替换内容按普通文字处理；不改变其他字段。 */
+let NR = null;
+function noteReplacePlan(txns, find, replacement, ids=null) {
+  const changes=new Map();let occurrences=0,tooLong=0;
+  if(!find || find===replacement)return {changes,occurrences,tooLong};
+  for(const t of txns) {
+    if(ids&&!ids.has(t.id))continue;
+    const before=t.note||'';if(!before.includes(find))continue;
+    const parts=before.split(find),note=parts.join(replacement);
+    occurrences+=parts.length-1;
+    if(note.length>NOTE_MAX)tooLong++;
+    changes.set(t.id,{before:t,note});
+  }
+  return {changes,occurrences,tooLong};
+}
+function openNoteReplace(scope='all') {
+  if(stack.at(-1).name==='list')renderListBody();
+  NR={scope,results:new Set(L.ids||[]),selected:new Set(SEL||[]),plan:null};
+  openSheet('备注关键词替换',`<label for="nrFind">查找文字</label><input id="nrFind" class="field" value="${esc(L.q||'')}" placeholder="例如：欠款" maxlength="${NOTE_MAX}" oninput="noteReplaceInvalidate()">
+    <label for="nrReplacement">替换为</label><input id="nrReplacement" class="field" placeholder="例如：待付款（留空表示删除）" maxlength="${NOTE_MAX}" oninput="noteReplaceInvalidate()">
+    <label>替换范围</label><div class="chips note-replace-scopes">${[['all','全部账本的所有记录'],['results','当前搜索／筛选结果'],...(NR.selected.size?[['selected',`已选 ${NR.selected.size} 笔`]]:[])].map(([v,label])=>`<button type="button" class="chip ${scope===v?'on':''}" data-scope="${v}" onclick="noteReplaceScope(this.dataset.scope)">${label}</button>`).join('')}</div>
+    <div class="tip">只替换备注中的文字，包含同一备注里多次出现的文字。按原文匹配，英文区分大小写；金额、日期、分类、账户等保持不变。</div>
+    <button class="btn ghost" onclick="previewNoteReplace()">预览替换</button><div id="nrPreview" aria-live="polite"></div>`);
+  returnFromPicker(()=>{NR=null;closeSheet();});
+}
+function noteReplaceInvalidate() { if(NR)NR.plan=null;const el=$('#nrPreview');if(el)el.innerHTML=''; }
+function noteReplaceScope(scope) {
+  NR.scope=scope;noteReplaceInvalidate();
+  document.querySelectorAll('.note-replace-scopes [data-scope]').forEach(el=>el.classList.toggle('on',el.dataset.scope===scope));
+}
+function previewNoteReplace() {
+  const find=$('#nrFind').value,replacement=$('#nrReplacement').value;
+  if(!find)return toast('请输入要查找的文字');
+  if(find===replacement)return toast('查找文字和替换文字相同，无需修改');
+  const ids=NR.scope==='all'?null:NR[NR.scope==='selected'?'selected':'results'];
+  const plan=noteReplacePlan(S.txns,find,replacement,ids);
+  NR.plan={...plan,find,replacement,data:S,ver:_dataVer};
+  const {changes,occurrences,tooLong}=plan;
+  const examples=[];for(const row of changes.values()){examples.push(row);if(examples.length===10)break;}
+  $('#nrPreview').innerHTML=`<div class="tip">${NR.scope==='all'?'全部账本的所有记录':NR.scope==='selected'?'已选记录':'当前搜索／筛选结果'}：匹配 <b>${changes.size}</b> 笔，共 <b>${occurrences}</b> 处。${!changes.size?'没有需要替换的备注。':''}${tooLong?`<br>有 ${tooLong} 笔替换后超过 ${NOTE_MAX} 字，请缩短替换内容后重新预览。`:''}</div>
+    ${examples.map(({before,note})=>`<div class="note-replace-example"><small>${dateDisplay(before.time)} · ${esc((S.books.find(b=>b.id===before.bookId)||{}).name||'账本')}</small><div><b>原文</b><span>${esc(before.note)}</span></div><div><b>替换后</b><span>${esc(note)||'（空备注）'}</span></div></div>`).join('')}
+    ${changes.size>10?'<div class="ver">仅预览前 10 笔，确认后会替换范围内全部匹配记录。</div>':''}
+    <button class="btn" onclick="applyNoteReplace()" ${!changes.size||tooLong?'disabled':''}>替换 ${changes.size} 笔备注</button>`;
+}
+function applyNoteReplace() {
+  const p=NR?.plan;
+  if(!p||!p.changes.size||p.tooLong)return toast('请先预览替换结果');
+  if(p.data!==S||p.ver!==_dataVer||p.find!==$('#nrFind').value||p.replacement!==$('#nrReplacement').value) {
+    noteReplaceInvalidate();return toast('数据或替换文字已变化，请重新预览');
+  }
+  const label='备注关键词替换';
+  mergeRun(label,()=>{
+    const n=remapTxns(t=>p.changes.has(t.id)?{note:p.changes.get(t.id).note}:null);
+    if(NR.scope==='selected')selEnd();NR=null;
+    return `已替换 <b>${n}</b> 笔备注、共 <b>${p.occurrences}</b> 处，其他内容保持不变。`;
+  },null,'修改');
 }

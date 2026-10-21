@@ -200,8 +200,8 @@ Pages.add = () => {
       <div class="desk-amount-result"><small id="expr"></small><span>合计 <b id="amt"></b></span></div>
       ${accountEntryHint()?`<div class="tip">${accountEntryHint()}</div>`:''}
       <div class="desk-form-grid">${!transfer?pick('账户',accName(E.accountId),"pickAcc('accountId')"):''}
-      <label class="desk-field"><span>日期</span><input type="date" aria-label="日期" value="${ymd(E.time)}" max="${ymd(Date.now())}" onchange="desktopDateTime(this.value,null)"></label>
-      <label class="desk-field"><span>时间</span><input type="time" aria-label="时间" value="${hm(E.time)}" onchange="desktopDateTime(null,this.value)"></label>
+      ${pick('日期',dateDisplay(E.time),"dateSheet('选择日期',ymd(E.time),v=>{desktopDateTime(v,null);render()},{max:ymd(Date.now())})")}
+      ${pick('时间',hm(E.time),"timeSheet('选择时间',hm(E.time),v=>{desktopDateTime(null,v);render()})")}
       ${pick('成员',E.member||'本人',"pickTag('member')")}${pick('商家',E.merchant,"pickTag('merchant')")}${pick('项目',E.project,"pickTag('project')")}
       ${S.books.length>1?pick('账本',(S.books.find(b=>b.id===E.bookId)||curBook()).name,'pickTxBook()'):''}</div>
       <label class="desk-field"><span>备注</span><textarea aria-label="备注" maxlength="${NOTE_MAX}" rows="3" placeholder="为这笔记录补充一些说明…" oninput="E.note=this.value">${esc(E.note||'')}</textarea></label>

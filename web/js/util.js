@@ -50,3 +50,6 @@ function periodLabel(kind, ref) {
   return '全部时间';
 }
 const isFuture = (kind, ref) => kind !== 'all' && periodRange(kind, shiftRef(kind, ref, 1))[0] > Date.now();
+
+// Display only: storage and date calculations retain YYYY-MM-DD.
+const dateDisplay = v => { const d = new Date(typeof v === "string" ? parseYmd(v) : v); return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`; };

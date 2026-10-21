@@ -4,7 +4,7 @@
 const NATIVE = !!(window.Android && Android.dbOpen);
 let S = null;
 function migrate(d) {
-  if ((d.v || 1) < 2) { addDefaultSubs(d); d.v = 2; }
+  if ((d.v || 1) < 2) { addDefaultSubs(d,true); d.v = 2; }
   if (!Array.isArray(d.merchants)) d.merchants = [...DEFAULT_MERCHANTS];
   if (!Array.isArray(d.projects)) d.projects = [...DEFAULT_PROJECTS];
   d.settings = d.settings || {};

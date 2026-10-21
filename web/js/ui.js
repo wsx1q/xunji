@@ -100,7 +100,7 @@ function dateRefresh(scrollY) {
     c.classList.toggle('dis', !!DS.max && `${DS.y}-${pad(m)}` > DS.max.slice(0, 7));
   });
   $('#dsCal').innerHTML = dateCells();
-  $('#dsOk').textContent = `确定 ${DS.y}-${pad(DS.m)}-${pad(DS.d)}`;
+  $('#dsOk').textContent = `确定 ${DS.y}/${DS.m}/${DS.d}`;
   if (scrollY) dateScrollY();
 }
 function dateScrollY() {
@@ -162,10 +162,10 @@ function sheetPick(v) { const f = _sheetCb; closeSheet(); f && f(v); render(); }
 /* 选择面板里的列表也能长按：长按一行编辑（改完回到这个面板，_pickReopen），长按后拖动排序 */
 let _pickReopen = null;
 /** 账户列表：一级账户和缩进的子账户，右边是余额。isOn(id) 是否选中，click(id) 点击时执行的代码，skip 不列出的账户，lp 能否长按编辑 */
-function accRows(isOn, click, skip = '', lp = false) {
+function accRows(isOn, click, skip = '', lp = false, filter=null, ownBalance=false) {
   const bal = balances();
   const lpAttr = (a, sub) => (lp ? `data-lp="accpick" data-lpid="${a.id}" data-lpg="${sub ? 'kid|' + a.pid : 'top'}"` : '');
-  const opt = (a, sub) => (a.id === skip ? '' : `<div class="opt ${sub ? 'sub' : ''} ${isOn(a.id) ? 'on' : ''}" data-v="${a.id}" ${lpAttr(a, sub)} onclick="${click(a.id)}"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}</span><em>${money(sub ? bal[a.id] : accSum(a.id, bal))}</em></div>`); // 上级显示合计（含子账户）
+  const opt = (a, sub) => (a.id === skip || (filter&&!filter(a)) ? '' : `<div class="opt ${sub ? 'sub' : ''} ${isOn(a.id) ? 'on' : ''}" data-v="${a.id}" ${lpAttr(a, sub)} onclick="${click(a.id)}"><div class="ci">${accIcon(a)}</div><span>${esc(a.name)}${ownBalance&&accKids(a.id).length?'（自身余额）':''}</span><em>${money(sub||ownBalance ? bal[a.id] : accSum(a.id, bal))}</em></div>`); // 上级显示合计（含子账户）
   return accTops().map(a => opt(a) + accKids(a.id).map(k => opt(k, true)).join('')).join('');
 }
 /** 成员 / 商家 / 项目列表。opts 要列出的名字（'' 表示没有设置，显示成 none），click 里用 this.dataset.v 取值。
@@ -363,3 +363,16 @@ function groupHtml(tx, accId) {
   if (!tx.length) return `<div class="card">${empty('暂无记录')}</div>`;
   return dayGroups(tx).map(g => dayHtml(g.k, g.list, accId)).join('');
 }
+
+// Shared in-app time entry, used by ordinary entries and account bookkeeping.
+let TS=null;
+function timeSheet(title,value,cb) {
+  const [h,m]=(value||hm(Date.now())).split(':');TS={cb};
+  openSheet(title,`<div class="time-entry"><label>小时<input class="field" id="tsHour" type="number" inputmode="numeric" min="0" max="23" step="1" value="${+h}"></label><b>:</b><label>分钟<input class="field" id="tsMinute" type="number" inputmode="numeric" min="0" max="59" step="1" value="${+m}"></label></div><div class="tip">24 小时制，可直接输入小时和分钟。</div><div class="btn-row"><button class="btn ghost" onclick="timeOk(true)">现在</button><button class="btn" onclick="timeOk()">确定</button></div>`);
+}
+function timeOk(now=false) {
+  const h=$('#tsHour').value,m=$('#tsMinute').value;
+  if(!now&&(h===''||m===''||!Number.isInteger(+h)||!Number.isInteger(+m)||+h<0||+h>23||+m<0||+m>59))return toast('请输入有效时间（00:00–23:59）');
+  const value=now?hm(Date.now()):`${pad(+h)}:${pad(+m)}`,cb=TS.cb;closeSheet();cb&&cb(value);
+}
+function returnFromPicker(fn) { $('#sheet .sh-hd b').onclick=fn;$('#sheet .sh-mask').onclick=fn; }

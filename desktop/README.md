@@ -18,6 +18,8 @@
 
 账户默认提供现金、银行卡、微信／支付宝、投资理财、应收款、应付款、其他资产／负债七类。已有账本可补齐缺少的类型，原信用卡和导入账户保持兼容；借还本金与投资本金走转账，利息费用和赎回差额单独计收支。详见[账户分类与做账](../docs/accounts.md)。
 
+默认分类采用“简洁高效版”：支出 11 个一级分类、65 个二级分类，收入 7 个一级分类、30 个二级分类。图标及完整层级见[默认分类与图标](../docs/default-categories.md)。已有数据可在“分类管理 → 默认方案”添加缺少的分类，原分类和历史不自动覆盖。应收、应付和投资做账的收付款账户统一使用应用内账户面板，保留父子层级和自身余额。
+
 ## 截图识别
 
 将截图拖入“识别与导入”，可批量处理长图。支持淘宝、京东、拼多多、抖音和超盒算订单列表。
@@ -83,6 +85,7 @@ node desktop/tests/refunds.cjs
 node tests/home_ledger.cjs
 node tests/recent_categories.cjs
 node tests/account_flows.cjs
+node tests/default_categories_ui.cjs
 ```
 
 ## 重新录制 GIF

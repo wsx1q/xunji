@@ -158,13 +158,14 @@ function accountActionPanel(a) {
     ${group==='invest'||group==='other'?`<button class="btn ghost" onclick="editAcc('${a.id}')">估值／余额调整</button>`:''}</div>`}
     <div class="tip">${group==='receivable'?'借出与收回用本金转账；已确认收入但尚未收到的钱，可登记应收收入，到账时再收回本金。坏账核销记支出。':group==='payable'?'信用卡、花呗、借款可分别建子账户。消费记支出，借入和还本走转账，避免重复计算。余额为正表示预存款或多还款。':group==='invest'?'投资本金走转账；现金收益选实际入账账户，留在投资账户的收益选本账户。估值调整只改变资产余额，不计收支。':'正余额计资产，负余额计负债；盘点或估值通过余额调整记录，不计收支。'}</div></div>`;
 }
-function flowCategory(type,interest=false) {
+function flowCategory(type,interest=false,purpose='') {
   const cats=S.categories[type];
-  return (cats.find(c=>c.name===(interest?'利息':type==='income'?'理财':'其他'))||cats.find(c=>!c.pid)||cats[0]||{}).id||'';
+  const names=type==='income'?(interest?['其他资产收益','利息','银行利息','理财收益','理财']:['理财收益','理财','投资与资产收入','其他收入','其他']):purpose==='loan'?['贷款利息','利息','其他金融费用','其他支出','其他']:purpose==='fee'?['投资交易手续费','银行／支付手续费','手续费','其他金融费用','其他支出','其他']:['特殊支出','其他支出','其他'];
+  return names.map(n=>cats.find(c=>c.name===n)).find(Boolean)?.id||cats.find(c=>!c.pid)?.id||cats[0]?.id||'';
 }
 function accountEntry(id,type,note) {
   const group=accountGroup(accById(id));
-  const cat=group==='invest'?flowCategory(type):(S.categories[type].find(c=>c.name==='其他')||S.categories[type][0]||{}).id||'';
+  const cat=group==='invest'?flowCategory(type):(S.categories[type].find(c=>c.name===(type==='expense'?'其他支出':'其他收入'))||S.categories[type].find(c=>c.name==='其他')||S.categories[type][0]||{}).id||'';
   startAdd(null,{accountId:id,type,catId:cat,note});
 }
 let AF=null;
@@ -172,28 +173,41 @@ function openAccountFlow(id,kind) {
   const a=accById(id),f=ACCOUNT_FLOWS[kind];
   if(!a||!f||accountGroup(a)!==f.group||accKids(id).length)return;
   const options=S.accounts.filter(x=>['cash','debit','online'].includes(accountGroup(x)));
-  AF={id,kind,other:options[0]?.id||'',amount:'',extra:'',received:'',catId:flowCategory(f.extraType||'income',kind==='collect'),note:'',time:Date.now(),gainCatId:flowCategory('income'),lossCatId:flowCategory('expense')};
+  AF={id,kind,other:options[0]?.id||'',amount:'',extra:'',received:'',catId:flowCategory(f.extraType||'income',kind==='collect',kind==='repay'?'loan':kind==='buy'?'fee':''),note:'',time:Date.now(),gainCatId:flowCategory('income'),lossCatId:flowCategory('expense')};
   renderAccountFlow();
 }
 function keepAccountFlow() {
   if(!AF)return;
-  for(const k of ['other','amount','extra','received','note'])if($('#af_'+k))AF[k]=$('#af_'+k).value;
-  if($('#af_date')){const date=$('#af_date').value;if(date){const [y,m,d]=date.split('-').map(Number),t=new Date(AF.time);t.setFullYear(y,m-1,d);AF.time=t.getTime();}}
+  for(const k of ['amount','extra','received','note'])if($('#af_'+k))AF[k]=$('#af_'+k).value;
 }
 function renderAccountFlow() {
   const f=ACCOUNT_FLOWS[AF.kind],a=accById(AF.id);if(!a)return closeSheet();
   const options=S.accounts.filter(x=>['cash','debit','online'].includes(accountGroup(x)));
   const current=balances()[a.id],available=AF.kind==='repay'?Math.max(0,-current):Math.max(0,current);
   openSheet(f.name,`<div class="kv"><span>${esc(accFull(a))}</span><b>${money(current)}</b></div><div class="tip">${f.help}${['collect','repay','redeem'].includes(AF.kind)?` 可处理本金／账面余额 ${money(available)}。`:''}</div>
-    <label>${f.direction==='out'?'付款':'收款'}账户</label><select class="field" id="af_other">${options.length?options.map(x=>`<option value="${x.id}" ${x.id===AF.other?'selected':''}>${esc(accFull(x))}${accKids(x.id).length?'（自身余额）':''}</option>`).join(''):'<option value="">请先建立现金、银行卡或微信／支付宝账户</option>'}</select>
+    <label>${f.direction==='out'?'付款':'收款'}账户</label><button type="button" class="field account-choice" id="af_other" data-value="${esc(AF.other)}" onclick="pickAccountFlowOther()"><span>${accById(AF.other)?accIcon(accById(AF.other))+' '+esc(accFull(accById(AF.other)))+(accKids(AF.other).length?'（自身余额）':''):'请选择账户'}</span><em>›</em></button>
     <label>${AF.kind==='redeem'?'本次转出的账面金额':'本金金额'}</label><input class="field" id="af_amount" type="number" inputmode="decimal" min="0.01" step="0.01" value="${esc(AF.amount)}">
     ${AF.kind==='redeem'?`<label>实际到账金额（扣费后，可为 0）</label><input class="field" id="af_received" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(AF.received)}">`:''}
     ${f.extra?`<label>${f.extra}（选填）</label><input class="field" id="af_extra" type="number" inputmode="decimal" min="0" step="0.01" value="${esc(AF.extra)}"><div class="kv" onclick="keepAccountFlow();catSheet('选择${f.extraType==='income'?'收入':'费用'}分类','${f.extraType}',AF.catId,id=>{AF.catId=id;renderAccountFlow()})"><span>${f.extraType==='income'?'收入':'费用'}分类</span><b>${esc(catLabel(AF.catId))} ›</b></div>`:''}
     ${AF.kind==='redeem'?`<div class="kv" onclick="keepAccountFlow();catSheet('收益分类','income',AF.gainCatId,id=>{AF.gainCatId=id;renderAccountFlow()})"><span>收益分类</span><b>${esc(catLabel(AF.gainCatId))} ›</b></div><div class="kv" onclick="keepAccountFlow();catSheet('亏损分类','expense',AF.lossCatId,id=>{AF.lossCatId=id;renderAccountFlow()})"><span>亏损分类</span><b>${esc(catLabel(AF.lossCatId))} ›</b></div>`:''}
-    <label>日期</label><input class="field" id="af_date" type="date" value="${ymd(AF.time)}" max="${ymd(Date.now())}"><label>备注</label><input class="field" id="af_note" value="${esc(AF.note)}" maxlength="120"><div class="btn-row"><button class="btn ghost" onclick="closeSheet()">取消</button><button class="btn" onclick="saveAccountFlow()" ${options.length?'':'disabled'}>确认记账</button></div>`);
+    <label>日期与时间</label><div class="flow-datetime"><button type="button" class="chip" id="af_date" onclick="pickAccountFlowDate()">📅 ${dateDisplay(AF.time)}</button><button type="button" class="chip" id="af_time" onclick="pickAccountFlowTime()">🕘 ${hm(AF.time)}</button></div><label>备注</label><input class="field" id="af_note" value="${esc(AF.note)}" maxlength="120"><div class="btn-row"><button class="btn ghost" onclick="closeSheet()">取消</button><button class="btn" onclick="saveAccountFlow()" ${options.length?'':'disabled'}>确认记账</button></div>`);
+  $('#sheet .sh-hd b').onclick=closeSheet;$('#sheet .sh-mask').onclick=closeSheet;
+}
+function pickAccountFlowOther() {
+  if(!AF)return;keepAccountFlow();
+  const eligible=a=>['cash','debit','online'].includes(accountGroup(a));
+  const rows=accRows(id=>id===AF.other,id=>`chooseAccountFlowOther('${id}')`,'',false,eligible,true);
+  openSheet(ACCOUNT_FLOWS[AF.kind].direction==='out'?'选择付款账户':'选择收款账户',rows||empty('请先建立现金、银行卡或微信／支付宝账户','💳'));
+  const body=$('#sheet .sh-bd');
+  body.insertAdjacentHTML('beforeend',`<div class="btn-row"><button class="btn ghost" onclick="renderAccountFlow()">返回做账</button><button class="btn" onclick="editAcc('','',()=>pickAccountFlowOther())">＋ 新建账户</button></div>`);
+  body.scrollTop=0;
+  $('#sheet .sh-hd b').onclick=renderAccountFlow;$('#sheet .sh-mask').onclick=renderAccountFlow;
+}
+function chooseAccountFlowOther(id) {
+  const a=accById(id);if(!AF||!a||!['cash','debit','online'].includes(accountGroup(a)))return;
+  AF.other=id;renderAccountFlow();
 }
 function saveAccountFlow() {
-  if($('#af_date')&&!$('#af_date').value)return toast('请选择日期');
   keepAccountFlow();const a=accById(AF?.id),f=ACCOUNT_FLOWS[AF?.kind],other=accById(AF?.other);
   if(!a||!f||accountGroup(a)!==f.group||accKids(a.id).length||!other||!['cash','debit','online'].includes(accountGroup(other)))return toast('请选择有效的收付款账户');
   if(!Number.isFinite(AF.time)||sod(AF.time)>sod(Date.now()))return toast('请选择有效日期，不能晚于今天');
@@ -225,4 +239,15 @@ function accountEntryHint() {
   if(group==='receivable')return E.type==='income'?'此笔确认收入并增加应收；实际到账时请用“收回本金”，避免重复计收入。':'此笔计支出并减少应收；借出或垫付本金请用账户详情的“借出／垫付”。';
   if(group==='invest')return '这里只记录收益或亏损；投资申购、赎回本金请用账户详情的专用入口。';
   return '';
+}
+
+function pickAccountFlowDate() {
+  if(!AF)return;keepAccountFlow();
+  dateSheet('选择日期',ymd(AF.time),v=>{const [y,m,d]=v.split('-').map(Number),t=new Date(AF.time);t.setFullYear(y,m-1,d);AF.time=t.getTime();renderAccountFlow();},{max:ymd(Date.now())});
+  returnFromPicker(renderAccountFlow);
+}
+function pickAccountFlowTime() {
+  if(!AF)return;keepAccountFlow();
+  timeSheet('选择时间',hm(AF.time),v=>{const [h,m]=v.split(':').map(Number),t=new Date(AF.time);t.setHours(h,m,0,0);AF.time=t.getTime();renderAccountFlow();});
+  returnFromPicker(renderAccountFlow);
 }
